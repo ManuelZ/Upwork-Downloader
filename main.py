@@ -117,25 +117,13 @@ def search_jobs(client):
                 f.write("\n")
 
         df = pd.read_csv(config.data_file)
-
-        with open(config.data_file, "a") as csvfile:
-            for result in results:
-                row = craft_df_row(fieldnames, result)
+        for result in results:
+            row = craft_df_row(fieldnames, result)
+            # Check duplicates
+            if not result.get('id') in df['id'].unique():
                 addRow(df, row)
-
-                writer = csv.DictWriter(csvfile,
-                                        fieldnames=fieldnames,
-                                        delimiter=',',
-                                        quotechar='"',
-                                        quoting=csv.QUOTE_ALL,
-                                        lineterminator='\n'
-                                        )
-
-                row = craft_row(fieldnames, result)
-                writer.writerow(row)
-
         print(len(results))
-    print(df.shape)
+        df.to_csv(config.data_file, index=False)
 
 
 
@@ -146,7 +134,7 @@ def craft_df_row(fieldnames, result):
     row = []
     for key in fieldnames:
         if key == "skills":
-            row.append("; ".join(result[key]))
+            row.append("; ".join(result.get(key)))
             continue
         row.append(toUni(result[key]))
     return row
