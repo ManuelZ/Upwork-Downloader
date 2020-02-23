@@ -43,25 +43,16 @@ def get_categories(client):
    
 
 def save_results_to_csv(results):
-    add_header_to_csv()
-    df = pd.read_csv(config.DATA_FILE)
+    if not isfile(config.DATA_FILE):
+        df = pd.DataFrame(columns=config.FIELDS_NAMES)
+    else:
+        df = pd.read_csv(config.DATA_FILE, names=config.FIELDS_NAMES, header=0)
+    
     for result in results:
-        row = craft_df_row(result)
-        # Check duplicates
-        if not result.get('id') in df['id'].unique():
-            add_row(df, row)
-    df.to_csv(config.DATA_FILE, index=False)
-
-
-def add_header_to_csv():
-    if not exists(config.DATA_FILE) or not isfile(config.DATA_FILE):
-        with open(config.DATA_FILE, "w") as f:
-            f.write(",".join(config.FIELDS_NAMES))
-            f.write("\n")
-
-
-def add_row(df, values):
-    df.loc[len(df)] = values
+        if not result['id'] in df.index:
+            row = craft_df_row(result)
+            df = df.append(row)
+    df.to_csv(config.DATA_FILE, index=True)
 
 
 def craft_df_row(result):
@@ -83,10 +74,10 @@ def craft_df_row(result):
                 client_property = "{:.2f}".format(client_property)
             row.append(to_unicode(client_property))
             continue
-        
+
         row.append(to_unicode(result[key]))
     
-    return row
+    return pd.Series(row, name=result['id'], index=config.FIELDS_NAMES)
 
 
 def get_access_token():
@@ -167,14 +158,13 @@ def search_jobs(client, terms):
         data['q'] = term
 
         for i in range(0, config.MAX_ENTRIES_PER_TERM, 100):
-            time.sleep(1.5)
+            time.sleep(1.5) # Default API limit
             results = client.provider_v2.search_jobs(data=data, page_offset="{}".format(i), page_size=100)
-            if not results:
-                break
-            print("Fetched {} results for term '{}'".format(len(results), term))
-            save_results_to_csv(results)
-            if len(results) < 100:
-                break
+            if results:
+                print("Fetched {} results for term '{}'".format(len(results), term))
+                save_results_to_csv(results)
+                if len(results) < 100:
+                    break
 
 
 if __name__ == "__main__":
