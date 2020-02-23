@@ -8,6 +8,7 @@ import certifi
 import config
 import pandas as pd
 import time
+import re
 
 def fix_module_import():
     """
@@ -66,14 +67,25 @@ def add_row(df, values):
 def craft_df_row(result):
     row = []
     for key in config.FIELDS_NAMES:
-        if key == "skills":
-            row.append("; ".join(result.get(key)))
+        if key == 'skills':
+            row.append("; ".join(result[key]))
             continue
+        
+        elif key == 'snippet':
+             result[key] = re.sub('\s+', ' ', result[key])
+             
         elif len(key.split(".")) == 2:
-            keys = key.split(".")
-            row.append(to_unicode(result.get(keys[0]).get(keys[1])))
+            key1, key2 = key.split(".")
+            client = result.get(key1)
+            client_property = client.get(key2)
+
+            if key == 'client.feedback':
+                client_property = "{:.2f}".format(client_property)
+            row.append(to_unicode(client_property))
             continue
+        
         row.append(to_unicode(result[key]))
+    
     return row
 
 
