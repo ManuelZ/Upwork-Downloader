@@ -2,3 +2,4 @@
 *.vscode
 *.pyc
 access_token
+.ipynb_checkpoints/*
