@@ -15,10 +15,17 @@ const Saver = ({ save, headers, data }) => {
   });
 
   if (save) {
-    csvWriter.writeRecords(data).then(() => setSaved(true));
+    csvWriter.writeRecords(data).then(() => {
+      setSaved(false);
+    });
   }
 
-  return <div>{saved ? "Saved!" : ""}</div>;
+  return (
+    <div>
+      <button onClick={() => setSaved(true)}>Save</button>
+      <div>{saved ? "Saved!" : ""}</div>
+    </div>
+  );
 };
 
 export default Saver;

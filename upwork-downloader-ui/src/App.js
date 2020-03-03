@@ -10,15 +10,19 @@ function App() {
   const [save, setSave] = useState();
 
   function handleResults(results) {
-    console.log(results.data);
     setJobs(results.data);
     setHeaders(results.meta.fields);
     setSave(true);
   }
 
   const handleOptionChange = changeEvent => {
-    console.log("changeEvent.target: ", changeEvent.target);
-    //changeEvent.target.value;
+    let jobId = changeEvent.target.id.split("-")[1];
+    let selectedClass = changeEvent.target.value;
+    setJobs(previousJobs => {
+      let newJobs = previousJobs.map(job => ({ ...job }));
+      newJobs.find(job => job.id == jobId).class = selectedClass;
+      return newJobs;
+    });
   };
 
   return (
