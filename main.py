@@ -21,13 +21,8 @@ def fix_module_import():
 
 
 def get_client(public_key, secret_key, oauth_access_token, oauth_access_token_secret):
-    """
-    Creates a full authenticated client object.
-    """
-    return upwork.Client(public_key,
-                         secret_key,
-                         oauth_access_token,
-                         oauth_access_token_secret)
+    """ Creates a full authenticated client object. """
+    return upwork.Client(public_key, secret_key, oauth_access_token, oauth_access_token_secret)
 
 
 def get_private_info(client):
@@ -37,11 +32,9 @@ def get_private_info(client):
 
 def get_categories(client):
     categories = client.provider_v2.get_categories_metadata()
-    for c in categories:
-        print(c["title"])
-    return categories
-   
+    return [to_unicode(c['title']) for c in categories]
 
+   
 def save_results_to_csv(results):
     if not isfile(config.DATA_FILE):
         df = pd.DataFrame(columns=config.FIELDS_NAMES)
@@ -69,10 +62,13 @@ def craft_df_row(result):
             key1, key2 = key.split(".")
             client = result.get(key1)
             client_property = client.get(key2)
-
             if key == 'client.feedback':
                 client_property = "{:.2f}".format(client_property)
             row.append(to_unicode(client_property))
+            continue
+
+        elif key == 'class':
+            row.append('')
             continue
 
         row.append(to_unicode(result[key]))
@@ -123,7 +119,7 @@ def to_unicode(s):
     return(unicode(s).encode('utf-8'))
 
 
-def search_jobs(client, terms):
+def search_jobs(terms):
     """
     Categories:
 
@@ -140,10 +136,15 @@ def search_jobs(client, terms):
         Sales & Marketing
         Accounting & Consulting
     """
-
+    
+    # At least one of the `q`, `title`, `skill` parameters should be specified.
     data = {
-        'q': 'machine learning',  # Terms treated with AND
-        'skills': ['python'],  # Skills treated with OR
+        # Searches for the title of the job's profile. 
+        # 'title': '',
+        # The search query.
+        'q': '',  # Terms treated with AND
+        # Searches for skills in the job's profile
+        # 'skills': ['python'],  # Skills treated with OR
         'job_status': 'open',
         'days_posted': 7,
         # 'category2': [ # only searches in ONE category at a time, the last
@@ -167,11 +168,27 @@ def search_jobs(client, terms):
                     break
 
 
+def get_jobs_by_id(ids):
+    for id in ids:
+        response = client.job.get_job_profile(id)
+        print(response)
+        break
+
+
 if __name__ == "__main__":
     fix_module_import()
     credentials = load_access_token()
     client = get_client(config.consumer_key,
                         config.consumer_secret,
                         **credentials)
-    search_terms = ["machine learning", "python", "artificial intelligence"]
-    search_jobs(client, search_terms)
+    search_terms = ['machine learning',
+                    'python',
+                    'artificial intelligence',
+                    'opencv',
+                    'time series',
+                    'computer vision',
+                    'visualization'
+                    ]
+    
+    search_jobs(search_terms)
+    # get_jobs_by_id(['~01ed772583214ce5c4'])
