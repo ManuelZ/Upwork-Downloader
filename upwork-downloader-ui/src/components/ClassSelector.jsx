@@ -1,51 +1,63 @@
 import React, { useState } from "react";
+import "./ClassSelector.css";
 
-const ClassSelector = handler => {
-  const [selectedOption, setSelectedOption] = useState("");
+const ClassSelector = ({ id, handler }) => {
+  const [selectedOption, setSelectedOption] = useState();
 
+  let labelClass = "rounded-lg shadow-md p-6 hover:cursor-pointer";
+
+  // https://blog.bitsrc.io/customise-radio-buttons-without-compromising-accessibility-b03061b5ba93
   return (
-    <div>
+    <div className="flex flex-col flex-1 items-center justify-around h-full">
       <div>
-        <label>
-          <input
-            type="radio"
-            name="react-tips"
-            value="option1"
-            checked={setSelectedOption("option1")}
-            onChange={handler}
-          />
-          Option 1
+        <input
+          id={`class1-${id}`}
+          type="radio"
+          name={`classes-${id}`}
+          value="class1"
+          checked={selectedOption === "class1"}
+          onChange={changeEvent => {
+            setSelectedOption("class1");
+            handler(changeEvent);
+          }}
+        />
+        <label className={labelClass} htmlFor={`class1-${id}`}>
+          <span>Class1</span>
         </label>
       </div>
 
       <div>
-        <label>
-          <input
-            type="radio"
-            name="react-tips"
-            value="option2"
-            checked={setSelectedOption("option2")}
-            onChange={handler}
-          />
-          Option 2
+        <input
+          id={`class2-${id}`}
+          type="radio"
+          name={`classes-${id}`}
+          value="class2"
+          checked={selectedOption === "class2"}
+          onChange={changeEvent => {
+            setSelectedOption("class2");
+            handler(changeEvent);
+          }}
+        />
+        <label className={labelClass} htmlFor={`class2-${id}`}>
+          <span>Class2</span>
         </label>
       </div>
 
       <div>
-        <label>
-          <input
-            type="radio"
-            name="react-tips"
-            value="option3"
-            checked={setSelectedOption("option3")}
-            onChange={handler}
-          />
-          Option 3
+        <input
+          id={`class3-${id}`}
+          type="radio"
+          name={`classes-${id}`}
+          value="class3"
+          checked={selectedOption === "class3"}
+          onChange={changeEvent => {
+            setSelectedOption("class3");
+            handler(changeEvent);
+          }}
+        />
+        <label className={labelClass} htmlFor={`class3-${id}`}>
+          <span>Class3</span>
         </label>
-      </div>
-
-      <div>
-        <button>Save</button>
       </div>
     </div>
   );

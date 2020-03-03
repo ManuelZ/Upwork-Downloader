@@ -7,9 +7,10 @@ import Saver from "./components/Saver";
 function App() {
   const [jobs, setJobs] = useState([]);
   const [headers, setHeaders] = useState([]);
-  const [save, setSave] = useState(false);
+  const [save, setSave] = useState();
 
   function handleResults(results) {
+    console.log(results.data);
     setJobs(results.data);
     setHeaders(results.meta.fields);
     setSave(true);
@@ -20,17 +21,22 @@ function App() {
     //changeEvent.target.value;
   };
 
-  //useEffect(() => {}, [jobs]);
-
   return (
     <div className="flex flex-col m-5 justify-center container mx-auto text-center p-4">
       <div>Please select your file</div>
+
       <Reader handleResults={handleResults} />
+
       <Saver save={save} headers={headers} data={jobs} />
+
       <div className="flex flex-col m-5 justify-center container mx-auto text-center p-4 items-center">
-        {jobs.map((job, index) => (
-          <Job key={job.id} details={job} handler={handleOptionChange} />
-        ))}
+        {jobs.map((job, index) => {
+          if (job.id) {
+            return (
+              <Job key={job.id} details={job} handler={handleOptionChange} />
+            );
+          }
+        })}
       </div>
     </div>
   );
