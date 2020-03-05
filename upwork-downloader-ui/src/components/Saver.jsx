@@ -2,28 +2,31 @@ import React, { useState } from "react";
 /* Beware with the window.require, this is an Electron app, not a Web app */
 const createCsvWriter = window.require("csv-writer").createObjectCsvWriter;
 
-const Saver = ({ save, headers, data }) => {
-  const [saved, setSaved] = useState(false);
+const Saver = ({ headers, data }) => {
+  const [save, setSave] = useState(false);
 
   headers = headers.map(h => {
     return { id: h, title: h };
   });
 
   const csvWriter = createCsvWriter({
-    path: "../data/out.csv",
+    path: "../data/data-out.csv",
     header: headers
   });
 
   if (save) {
-    csvWriter.writeRecords(data).then(() => {
-      setSaved(false);
-    });
+    console.log("Saving...");
+    let data_transformed = Object.keys(data).map(jobKey => ({
+      id: jobKey,
+      ...data[jobKey]
+    }));
+    csvWriter.writeRecords(data_transformed).then(() => setSave(false));
   }
 
   return (
     <div>
-      <button onClick={() => setSaved(true)}>Save</button>
-      <div>{saved ? "Saved!" : ""}</div>
+      <button onClick={() => setSave(true)}>Save</button>
+      <div>{save ? "Saved!" : ""}</div>
     </div>
   );
 };

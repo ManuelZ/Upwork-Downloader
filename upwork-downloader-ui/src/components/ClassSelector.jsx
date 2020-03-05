@@ -1,10 +1,13 @@
 import React, { useState } from "react";
 import "./ClassSelector.css";
 
-const ClassSelector = ({ id, handler }) => {
-  const [selectedOption, setSelectedOption] = useState();
+const ClassSelector = ({ id, clickHandler, selectedOption }) => {
+  let labelClass = "rounded-lg shadow-md p-6 hover:cursor-pointer ";
+  let onClass = "bg-teal-400";
 
-  let labelClass = "rounded-lg shadow-md p-6 hover:cursor-pointer";
+  let class1Value = "Good";
+  let class2Value = "So so";
+  let class3Value = "Bad";
 
   // https://blog.bitsrc.io/customise-radio-buttons-without-compromising-accessibility-b03061b5ba93
   return (
@@ -14,15 +17,19 @@ const ClassSelector = ({ id, handler }) => {
           id={`class1-${id}`}
           type="radio"
           name={`classes-${id}`}
-          value="class1"
-          checked={selectedOption === "class1"}
+          value={class1Value}
+          checked={selectedOption === class1Value}
           onChange={changeEvent => {
-            setSelectedOption("class1");
-            handler(changeEvent);
+            clickHandler(changeEvent);
           }}
         />
-        <label className={labelClass} htmlFor={`class1-${id}`}>
-          <span>Class1</span>
+        <label
+          className={
+            labelClass + (selectedOption === class1Value ? onClass : "")
+          }
+          htmlFor={`class1-${id}`}
+        >
+          <span>{class1Value}</span>
         </label>
       </div>
 
@@ -31,15 +38,19 @@ const ClassSelector = ({ id, handler }) => {
           id={`class2-${id}`}
           type="radio"
           name={`classes-${id}`}
-          value="class2"
-          checked={selectedOption === "class2"}
+          value={class2Value}
+          checked={selectedOption === class2Value}
           onChange={changeEvent => {
-            setSelectedOption("class2");
-            handler(changeEvent);
+            clickHandler(changeEvent);
           }}
         />
-        <label className={labelClass} htmlFor={`class2-${id}`}>
-          <span>Class2</span>
+        <label
+          className={
+            labelClass + (selectedOption === class2Value ? onClass : "")
+          }
+          htmlFor={`class2-${id}`}
+        >
+          <span>{class2Value}</span>
         </label>
       </div>
 
@@ -48,15 +59,19 @@ const ClassSelector = ({ id, handler }) => {
           id={`class3-${id}`}
           type="radio"
           name={`classes-${id}`}
-          value="class3"
-          checked={selectedOption === "class3"}
+          value={class3Value}
+          checked={selectedOption === class3Value}
           onChange={changeEvent => {
-            setSelectedOption("class3");
-            handler(changeEvent);
+            clickHandler(changeEvent);
           }}
         />
-        <label className={labelClass} htmlFor={`class3-${id}`}>
-          <span>Class3</span>
+        <label
+          className={
+            labelClass + (selectedOption === class3Value ? onClass : "")
+          }
+          htmlFor={`class3-${id}`}
+        >
+          <span>{class3Value}</span>
         </label>
       </div>
     </div>

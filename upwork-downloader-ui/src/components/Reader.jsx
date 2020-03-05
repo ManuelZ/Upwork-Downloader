@@ -9,11 +9,15 @@ const Reader = ({ handleResults }) => {
     fileReader.onloadend = e => {
       const content = fileReader.result;
       var results = readString(content, { header: true });
-      console.log(results);
       handleResults(results);
     };
-
-    fileReader.readAsText(file);
+    try {
+      fileReader.readAsText(file);
+    } catch (error) {
+      if (error instanceof TypeError) {
+        console.log("Bad file");
+      }
+    }
   };
 
   return (
