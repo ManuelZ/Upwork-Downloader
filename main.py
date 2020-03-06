@@ -1,14 +1,19 @@
-# pip install httplib2 urllib3
+# Built-in imports
 from __future__ import print_function
-import upwork
-import sys
-import os
 from os.path import exists, isfile
+import os
+import sys
 import certifi
-import config
-import pandas as pd
 import time
 import re
+
+# External imports
+import upwork
+import pandas as pd
+# pip install httplib2 urllib3
+
+# Local imports
+import config
 
 def fix_module_import():
     """
@@ -37,15 +42,18 @@ def get_categories(client):
    
 def save_results_to_csv(results):
     if not isfile(config.DATA_FILE):
+        print("CSV doesn't exist, creating...")
         df = pd.DataFrame(columns=config.FIELDS_NAMES)
     else:
-        df = pd.read_csv(config.DATA_FILE, names=config.FIELDS_NAMES, header=0)
-    
+        print("CSV exists, reading data and appending...")
+        df = pd.read_csv(config.DATA_FILE, names=config.FIELDS_NAMES, header=0, index_col=0)
+        df.reset_index(inplace=True)
+
     for result in results:
         if not result['id'] in df.index:
             row = craft_df_row(result)
             df = df.append(row)
-    df.to_csv(config.DATA_FILE, index=True)
+    df.to_csv(config.DATA_FILE, index=False)
 
 
 def craft_df_row(result):
@@ -169,6 +177,8 @@ def search_jobs(terms):
 
 
 def get_jobs_by_id(ids):
+    """Return detailed profile information about the job. This method returns an exhaustive list of attributes associated with the job.
+    """
     for id in ids:
         response = client.job.get_job_profile(id)
         print(response)
@@ -186,9 +196,8 @@ if __name__ == "__main__":
                     'artificial intelligence',
                     'opencv',
                     'time series',
-                    'computer vision',
-                    'visualization'
-                    ]
+                    'computer vision'
+                  ]
     
     search_jobs(search_terms)
     # get_jobs_by_id(['~01ed772583214ce5c4'])
