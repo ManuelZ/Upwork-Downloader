@@ -53,9 +53,10 @@ function App() {
     <div className="flex flex-col m-5 justify-center container mx-auto text-center p-4">
       <div>Please select your file</div>
 
-      <Reader handleResults={handleCSVData} />
-
-      <Saver headers={headers} data={jobs} />
+      <div className="flex flex-row justify-between w-3/4 container mx-auto">
+        <Reader handleResults={handleCSVData} />
+        <Saver headers={headers} data={jobs} />
+      </div>
 
       <div className="flex flex-col m-5 justify-center container mx-auto text-center p-4 items-center"></div>
       {Object.keys(jobs)

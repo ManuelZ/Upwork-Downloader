@@ -24,8 +24,13 @@ const Saver = ({ headers, data }) => {
   }
 
   return (
-    <div>
-      <button onClick={() => setSave(true)}>Save</button>
+    <div className="">
+      <button
+        className="px-4 py-2 bg-teal-500 hover:bg-teal-700 text-white font-bold rounded"
+        onClick={() => setSave(true)}
+      >
+        Save
+      </button>
       <div>{save ? "Saved!" : ""}</div>
     </div>
   );
