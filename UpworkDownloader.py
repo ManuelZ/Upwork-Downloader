@@ -5,15 +5,19 @@ import os
 import sys
 import certifi
 import time
+from datetime import datetime
 import re
 
 # External imports
 import upwork
 import pandas as pd
+from pytz import timezone
+from pytz import all_timezones
 # pip install httplib2 urllib3
 
 # Local imports
 import config
+
 
 def fix_module_import():
     """
@@ -39,8 +43,8 @@ def get_categories(client):
     categories = client.provider_v2.get_categories_metadata()
     return [to_unicode(c['title']) for c in categories]
 
-   
-def save_results_to_csv(results):
+
+def safe_load_data_file():
     if not isfile(config.DATA_FILE):
         print("CSV doesn't exist, creating...")
         df = pd.DataFrame(columns=config.FIELDS_NAMES)
@@ -48,8 +52,13 @@ def save_results_to_csv(results):
         print("CSV exists, reading data and appending...")
         df = pd.read_csv(config.DATA_FILE, names=config.FIELDS_NAMES, header=0, index_col=0)
         df.reset_index(inplace=True)
+    return df
+   
+def save_results_to_csv(results):
+    df = safe_load_data_file()
 
     for result in results:
+        # TODO: fix this
         if not result['id'] in df.index:
             row = craft_df_row(result)
             df = df.append(row)
@@ -166,24 +175,100 @@ def search_jobs(terms):
     for term in search_terms:
         data['q'] = term
 
-        for i in range(0, config.MAX_ENTRIES_PER_TERM, 100):
+        for i in range(0, config.MAX_ENTRIES_PER_TERM, config.ENTRIES_PER_RESULT_PAGE):
             time.sleep(1.5) # Default API limit
-            results = client.provider_v2.search_jobs(data=data, page_offset="{}".format(i), page_size=100)
+            results = client.provider_v2.search_jobs(data=data,
+                                                     page_offset="{}".format(i),
+                                                     page_size=config.ENTRIES_PER_RESULT_PAGE)
             if results:
                 print("Fetched {} results for term '{}'".format(len(results), term))
                 save_results_to_csv(results)
-                if len(results) < 100:
+                if len(results) < config.ENTRIES_PER_RESULT_PAGE:
                     break
 
 
 def get_jobs_by_id(ids):
     """Return detailed profile information about the job. This method returns an exhaustive list of attributes associated with the job.
     """
-    for id in ids:
-        response = client.job.get_job_profile(id)
-        print(response)
-        break
 
+    df = pd.DataFrame(columns=config.FIELDS_NAMES)
+    
+    def get_skills(skills):        
+        if isinstance(skills, str):
+            return skills
+
+        skills = skills.get('op_required_skill')
+
+        if isinstance(skills, str):
+            return skills
+
+        if isinstance(skills, dict):
+            return skills.get('skill')
+        
+        try:
+            skills = map(lambda x: x.get('skill'), skills)
+        except Exception as e:
+            print(f"@get_skills - {e}, {response}")
+        
+        return ";".join(list(skills))
+
+    def get_status(status):
+        if (status == 'Active'):
+            status = 'Open'
+        elif (status == 'Filled'):
+            status = 'Closed'
+        return status
+
+
+    def get_verification_status(status):
+        if status:
+            return 'VERIFIED'
+        else:
+            return 'None'
+    
+    def get_duration(duration):
+        if not duration:
+            return 'None'
+        return duration
+
+    for id in ids:
+        print(f"Going for id {id}")
+        try:
+            response = client.job.get_job_profile(id)
+        except upwork.exceptions.HTTP403ForbiddenError:
+            continue
+        buyer = response.get('buyer', {})
+        row = pd.Series([
+            id,
+            response.get('op_title'),
+            response.get('op_description'),
+            response.get('job_type'),
+            response.get('amount'),
+            get_status(response.get('ui_opening_status')),
+            response.get('op_job_category_v2', {}).get('op_job_category_v', {}).get('groups', {}).get('group', {}).get('name'),
+            response.get('op_job_category_v2', {}).get('op_job_category_v', {}).get('name'),
+            f"http://www.upwork.com/jobs/{id}",
+            response.get('workload'), # bad
+            get_duration(response.get('op_eng_duration')),
+            datetime.fromtimestamp(int(response.get('op_ctime'))//1000, tz=timezone('America/Lima')).strftime("%Y-%m-%dT%H:%M:%S%z"),
+            get_skills(response.get('op_required_skills')),
+            f"{float(buyer.get('op_adjusted_score')):.2f}",
+            response.get('op_tot_feedback'),
+            buyer.get('op_tot_jobs_posted'),
+            get_verification_status(response.get('op_cny_upm_verified')),
+            buyer.get('op_tot_fp_asgs'),
+            buyer.get('op_country'),
+            ''
+        ], name=id, index=config.FIELDS_NAMES)
+
+        df = df.append(row)
+    df.set_index("id", inplace=True)
+    return df
+
+
+def load_ids_from_file(filename):
+    with open(filename) as f:
+        return [line.rstrip() for line in f]
 
 if __name__ == "__main__":
     fix_module_import()
@@ -197,7 +282,30 @@ if __name__ == "__main__":
                     'opencv',
                     'time series',
                     'computer vision'
-                  ]
+                   ]
     
-    search_jobs(search_terms)
-    # get_jobs_by_id(['~01ed772583214ce5c4'])
+    # search_jobs(search_terms)
+    df = safe_load_data_file()
+    df.set_index('id', inplace=True)
+
+    print(df)
+
+    ids = load_ids_from_file('data/ids.txt')
+    good_jobs = get_jobs_by_id(ids)
+
+    print(good_jobs)
+    
+    df = pd.concat([df, good_jobs], axis=0)
+    
+    # Remove duplicates
+    # df = df.loc[~df.index.duplicated(keep='first')]
+
+
+    # TODO: Evaluate the resulting csv and fix different format
+
+    df.reset_index(inplace=True)
+    print("Saving data...")
+
+    print(df)
+    df.to_csv(config.DATA_FILE, index=False)
+    print("Saved")
