@@ -3,10 +3,17 @@ import Reader from "./components/Reader";
 import { withRouter } from "react-router-dom";
 import Job from "./components/Job";
 import Saver from "./components/Saver";
+import Filter from "./components/Filter";
 
 function App() {
   const [jobs, setJobs] = useState({});
   const [headers, setHeaders] = useState([]);
+  const [classFilter, setClassFilter] = useState({
+    good: true,
+    soso: true,
+    bad: true,
+    uncategorized: true
+  });
 
   /* Handle the loaded CSV file */
   function handleCSVData(results) {
@@ -49,30 +56,81 @@ function App() {
     return 0;
   };
 
+  let classes = [
+    {
+      id: "good",
+      label: "Good",
+      active: classFilter.good
+    },
+    {
+      id: "soso",
+      label: "So so",
+      active: classFilter.soso
+    },
+    {
+      id: "bad",
+      label: "Bad",
+      active: classFilter.bad
+    },
+    {
+      id: "uncategorized",
+      label: "Uncategorized",
+      active: classFilter.uncategorized
+    }
+  ];
+
+  const toggleFilter = filterId => {
+    setClassFilter(prevFilter => {
+      let newFilter = { ...prevFilter };
+      newFilter[filterId] = !prevFilter[filterId];
+      return newFilter;
+    });
+  };
+
+  const filteredJobs = Object.keys(jobs)
+    .map(jobKey => ({ id: jobKey, ...jobs[jobKey] }))
+    /* Get the filter state for the given job class or use the "uncategorized" value as default */
+    .filter(job => {
+      if (!job["id"]) {
+        return false;
+      }
+      let jobClass = job["class"];
+      if (jobClass) {
+        jobClass = jobClass.toLowerCase();
+      }
+      let show = classFilter[jobClass];
+      if (jobClass === "") {
+        show = classFilter["uncategorized"];
+      }
+      return show;
+    });
+
+  console.log(filteredJobs);
+
   return (
     <div className="flex flex-col m-5 justify-center container mx-auto text-center p-4">
       <div>Please select your file</div>
-
       <div className="flex flex-row justify-between w-3/4 container mx-auto">
         <Reader handleResults={handleCSVData} />
         <Saver headers={headers} data={jobs} />
       </div>
+      <Filter classes={classes} onToggleFilter={toggleFilter} />
 
-      <div className="flex flex-col m-5 justify-center container mx-auto text-center p-4 items-center"></div>
-      {Object.keys(jobs)
-        .map(jobKey => ({ id: jobKey, ...jobs[jobKey] }))
-        .sort(sortByDate)
-        .map(
-          (job, index) =>
-            job.id && (
-              <Job
-                key={job.id}
-                id={job.id}
-                details={job}
-                handler={handleClassSelection}
-              />
-            )
-        )}
+      <div className="flex flex-col m-5 justify-center container mx-auto text-center p-4 items-center">
+        {filteredJobs
+          .sort(sortByDate)
+          .map(
+            (job, index) =>
+              job.id && (
+                <Job
+                  key={job.id}
+                  id={job.id}
+                  details={job}
+                  handler={handleClassSelection}
+                />
+              )
+          )}
+      </div>
     </div>
   );
 }
