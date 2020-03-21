@@ -15,7 +15,6 @@ const Saver = ({ headers, data }) => {
   });
 
   if (save) {
-    console.log("Saving...");
     let data_transformed = Object.keys(data).map(jobKey => ({
       id: jobKey,
       ...data[jobKey]
