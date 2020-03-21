@@ -40,7 +40,7 @@ const Job = ({ id, details, handler }) => {
 
       <div className="flex flex-col w-5/6 px-6 py-4">
         {jobHeader}
-        <div className="py-4 break-normal">{details.snippet}</div>
+        <div className="py-4 break-words">{details.snippet}</div>
       </div>
     </div>
   );
