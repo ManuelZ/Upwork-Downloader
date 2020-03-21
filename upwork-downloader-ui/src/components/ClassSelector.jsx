@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import "./ClassSelector.css";
 
 const ClassSelector = ({ id, clickHandler, selectedOption }) => {
