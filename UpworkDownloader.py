@@ -13,7 +13,6 @@ import upwork
 import pandas as pd
 from pytz import timezone
 from pytz import all_timezones
-# pip install httplib2 urllib3
 
 # Local imports
 import config
