@@ -134,23 +134,8 @@ def load_access_token():
 
 
 def search_jobs(terms):
-    """
-    Categories:
+    """ """
 
-        Web, Mobile & Software Dev
-        IT & Networking
-        Data Science & Analytics
-        Engineering & Architecture
-        Design & Creative
-        Writing
-        Translation
-        Legal
-        Admin Support
-        Customer Service
-        Sales & Marketing
-        Accounting & Consulting
-    """
-    
     # At least one of the `q`, `title`, `skill` parameters should be specified.
     data = {
         # Searches for the title of the job's profile. 
