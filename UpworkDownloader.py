@@ -17,6 +17,7 @@ from pytz import all_timezones
 
 # Local imports
 import config
+from utils import to_unicode
 
 
 def fix_module_import():
