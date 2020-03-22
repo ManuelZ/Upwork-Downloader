@@ -73,8 +73,8 @@ def craft_df_row(result):
             row.append("; ".join(result[key]))
             continue
         
-        elif key == 'snippet':
-             result[key] = re.sub('\s+', ' ', result[key])
+        # elif key == 'snippet':
+        #      result[key] = re.sub('\s+', ' ', result[key])
              
         elif len(key.split(".")) == 2:
             key1, key2 = key.split(".")
