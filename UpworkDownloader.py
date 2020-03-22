@@ -133,10 +133,6 @@ def load_access_token():
     }
 
 
-def to_unicode(s):
-    return(unicode(s).encode('utf-8'))
-
-
 def search_jobs(terms):
     """
     Categories:
