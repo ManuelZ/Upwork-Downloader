@@ -6,7 +6,7 @@ const ClassSelector = ({ id, clickHandler, selectedOption }) => {
   let onClass = "bg-teal-400";
 
   let class1Value = "Good";
-  let class2Value = "So so";
+  let class2Value = "Maybe";
   let class3Value = "Bad";
 
   // https://blog.bitsrc.io/customise-radio-buttons-without-compromising-accessibility-b03061b5ba93

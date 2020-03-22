@@ -10,7 +10,7 @@ function App() {
   const [headers, setHeaders] = useState([]);
   const [classFilter, setClassFilter] = useState({
     good: true,
-    soso: true,
+    maybe: true,
     bad: true,
     uncategorized: true
   });
@@ -63,9 +63,9 @@ function App() {
       active: classFilter.good
     },
     {
-      id: "soso",
-      label: "So so",
-      active: classFilter.soso
+      id: "maybe",
+      label: "Maybe",
+      active: classFilter.maybe
     },
     {
       id: "bad",
@@ -87,23 +87,25 @@ function App() {
     });
   };
 
+  const jobFilter = job => {
+    if (!job["id"]) {
+      return false;
+    }
+    let jobClass = job["class"];
+    if (jobClass) {
+      jobClass = jobClass.toLowerCase();
+    }
+    let show = classFilter[jobClass];
+    if (jobClass === "") {
+      show = classFilter["uncategorized"];
+    }
+    return show;
+  };
+
   const filteredJobs = Object.keys(jobs)
     .map(jobKey => ({ id: jobKey, ...jobs[jobKey] }))
     /* Get the filter state for the given job class or use the "uncategorized" value as default */
-    .filter(job => {
-      if (!job["id"]) {
-        return false;
-      }
-      let jobClass = job["class"];
-      if (jobClass) {
-        jobClass = jobClass.toLowerCase();
-      }
-      let show = classFilter[jobClass];
-      if (jobClass === "") {
-        show = classFilter["uncategorized"];
-      }
-      return show;
-    });
+    .filter(jobFilter);
 
   console.log(filteredJobs);
 
