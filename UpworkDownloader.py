@@ -52,16 +52,19 @@ def safe_load_data_file():
         print("CSV exists, reading data and appending...")
         df = pd.read_csv(config.DATA_FILE, names=config.FIELDS_NAMES, header=0, index_col=0)
         df.reset_index(inplace=True)
+
     return df
    
+
 def save_results_to_csv(results):
     df = safe_load_data_file()
 
     for result in results:
-        # TODO: fix this
         if not result['id'] in df.index:
             row = craft_df_row(result)
             df = df.append(row)
+
+    df.reset_index(inplace=True, drop=True)
     df.to_csv(config.DATA_FILE, index=False)
 
 
@@ -84,9 +87,6 @@ def craft_df_row(result):
             row.append(to_unicode(client_property))
             continue
 
-        elif key == 'class':
-            row.append('')
-            continue
 
         row.append(to_unicode(result[key]))
     
@@ -134,7 +134,7 @@ def load_access_token():
 
 def search_jobs(terms):
     """ """
-
+    
     # At least one of the `q`, `title`, `skill` parameters should be specified.
     data = {
         # Searches for the title of the job's profile. 
@@ -144,7 +144,7 @@ def search_jobs(terms):
         # Searches for skills in the job's profile
         # 'skills': ['python'],  # Skills treated with OR
         'job_status': 'open',
-        'days_posted': 7,
+        'days_posted': config.DAYS_BACK_TO_SEARCH,
         # 'category2': [ # only searches in ONE category at a time, the last
         #     'Data Science & Analytics',
         #     'Engineering & Architecture',
@@ -189,7 +189,7 @@ def get_jobs_by_id(ids):
         try:
             skills = map(lambda x: x.get('skill'), skills)
         except Exception as e:
-            print(f"@get_skills - {e}, {response}")
+            print("@get_skills - {}, {}".format(e, response))
         
         return ";".join(list(skills))
 
@@ -199,7 +199,6 @@ def get_jobs_by_id(ids):
         elif (status == 'Filled'):
             status = 'Closed'
         return status
-
 
     def get_verification_status(status):
         if status:
@@ -213,7 +212,7 @@ def get_jobs_by_id(ids):
         return duration
 
     for id in ids:
-        print(f"Going for id {id}")
+        print("Going for id {}".format(id))
         try:
             response = client.job.get_job_profile(id)
         except upwork.exceptions.HTTP403ForbiddenError:
@@ -228,28 +227,45 @@ def get_jobs_by_id(ids):
             get_status(response.get('ui_opening_status')),
             response.get('op_job_category_v2', {}).get('op_job_category_v', {}).get('groups', {}).get('group', {}).get('name'),
             response.get('op_job_category_v2', {}).get('op_job_category_v', {}).get('name'),
-            f"http://www.upwork.com/jobs/{id}",
+            "http://www.upwork.com/jobs/{}".format(id),
             response.get('workload'), # bad
             get_duration(response.get('op_eng_duration')),
             datetime.fromtimestamp(int(response.get('op_ctime'))//1000, tz=timezone('America/Lima')).strftime("%Y-%m-%dT%H:%M:%S%z"),
             get_skills(response.get('op_required_skills')),
-            f"{float(buyer.get('op_adjusted_score')):.2f}",
+            "{:.2f}".format(float(buyer.get('op_adjusted_score'))),
             response.get('op_tot_feedback'),
             buyer.get('op_tot_jobs_posted'),
             get_verification_status(response.get('op_cny_upm_verified')),
             buyer.get('op_tot_fp_asgs'),
-            buyer.get('op_country'),
-            ''
+            buyer.get('op_country')
         ], name=id, index=config.FIELDS_NAMES)
 
         df = df.append(row)
-    df.set_index("id", inplace=True)
+    df.set_index('id', inplace=True, drop=True)
     return df
 
 
 def load_ids_from_file(filename):
     with open(filename) as f:
         return [line.rstrip() for line in f]
+
+
+def get_jobs_from_ids():
+    df = safe_load_data_file()
+    df.set_index('id', inplace=True)
+
+    ids = load_ids_from_file('data/ids.txt')
+    good_jobs = get_jobs_by_id(ids)
+
+    df = pd.concat([df, good_jobs], axis=0)
+    
+    # Remove duplicates
+    # df = df.loc[~df.index.duplicated(keep='first')]
+
+    df.reset_index(inplace=True)
+
+    df.to_csv(config.DATA_FILE, index=False)
+
 
 if __name__ == "__main__":
     fix_module_import()
@@ -265,28 +281,5 @@ if __name__ == "__main__":
                     'computer vision'
                    ]
     
-    # search_jobs(search_terms)
-    df = safe_load_data_file()
-    df.set_index('id', inplace=True)
-
-    print(df)
-
-    ids = load_ids_from_file('data/ids.txt')
-    good_jobs = get_jobs_by_id(ids)
-
-    print(good_jobs)
+    search_jobs(search_terms)
     
-    df = pd.concat([df, good_jobs], axis=0)
-    
-    # Remove duplicates
-    # df = df.loc[~df.index.duplicated(keep='first')]
-
-
-    # TODO: Evaluate the resulting csv and fix different format
-
-    df.reset_index(inplace=True)
-    print("Saving data...")
-
-    print(df)
-    df.to_csv(config.DATA_FILE, index=False)
-    print("Saved")

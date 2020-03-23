@@ -7,7 +7,6 @@ import Filter from "./components/Filter";
 
 function App() {
   const [jobs, setJobs] = useState({});
-  const [headers, setHeaders] = useState([]);
   const [classFilter, setClassFilter] = useState({
     good: true,
     maybe: true,
@@ -16,19 +15,28 @@ function App() {
   });
 
   /* Handle the loaded CSV file */
-  function handleCSVData(results) {
+  function handleCSVData(data, labels) {
     let resultsObject = {};
 
-    results.data.forEach(obj => {
+    data.data.forEach(obj => {
       const { id, ...rest } = obj;
-      resultsObject[id] = rest;
+      resultsObject[id] = Object.assign({ label: "" }, rest);
     });
 
-    setHeaders(results.meta.fields);
+    labels.data.forEach(obj => {
+      const { id, ...rest } = obj;
+
+      if (resultsObject[id]) {
+        /* Merge features and label */
+        resultsObject[id] = Object.assign(resultsObject[id], rest);
+      }
+    });
+
+    console.log(resultsObject);
     setJobs(resultsObject);
   }
 
-  /* Handle the click on a class label */
+  /* Handle the click on a label */
   const handleClassSelection = useCallback(changeEvent => {
     let jobId = changeEvent.target.id.split("-")[1];
     let selectedClass = changeEvent.target.value;
@@ -41,7 +49,7 @@ function App() {
       });
 
       /* Update only the job of interest */
-      newJobs[jobId].class = selectedClass;
+      newJobs[jobId].label = selectedClass;
       return newJobs;
     });
   }, []);
@@ -91,12 +99,13 @@ function App() {
     if (!job["id"]) {
       return false;
     }
-    let jobClass = job["class"];
-    if (jobClass) {
-      jobClass = jobClass.toLowerCase();
+    let jobLabel = job["label"];
+    if (jobLabel) {
+      jobLabel = jobLabel.toLowerCase();
     }
-    let show = classFilter[jobClass];
-    if (jobClass === "") {
+    let show = classFilter[jobLabel];
+
+    if (jobLabel === "") {
       show = classFilter["uncategorized"];
     }
     return show;
@@ -104,17 +113,15 @@ function App() {
 
   const filteredJobs = Object.keys(jobs)
     .map(jobKey => ({ id: jobKey, ...jobs[jobKey] }))
-    /* Get the filter state for the given job class or use the "uncategorized" value as default */
+    /* Get the filter state for the given job label or use the "uncategorized" value as default */
     .filter(jobFilter);
-
-  console.log(filteredJobs);
 
   return (
     <div className="flex flex-col m-5 justify-center container mx-auto text-center p-4">
       <div>Please select your file</div>
       <div className="flex flex-row justify-between w-3/4 container mx-auto">
         <Reader handleResults={handleCSVData} />
-        <Saver headers={headers} data={jobs} />
+        <Saver data={jobs} />
       </div>
       <Filter classes={classes} onToggleFilter={toggleFilter} />
 

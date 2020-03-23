@@ -34,20 +34,22 @@ const Job = ({ id, details, handler }) => {
         <ClassSelector
           id={id}
           clickHandler={handler}
-          selectedOption={details.class}
+          selectedOption={details.label}
         />
       </div>
 
       <div className="flex flex-col w-5/6 px-6 py-4">
         {jobHeader}
-        <div className="py-4 break-words">{details.snippet}</div>
+        <div className="py-4 break-words whitespace-pre-line">
+          {details.snippet}
+        </div>
       </div>
     </div>
   );
 };
 
 function areEqual(prevProps, nextProps) {
-  return prevProps.details.class === nextProps.details.class;
+  return prevProps.details.label === nextProps.details.label;
 }
 
 export default React.memo(Job, areEqual);
