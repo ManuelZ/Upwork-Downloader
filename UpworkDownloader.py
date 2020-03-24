@@ -175,7 +175,7 @@ def get_jobs_by_id(ids):
     df = pd.DataFrame(columns=config.FIELDS_NAMES)
     
     def get_skills(skills):        
-        if isinstance(skills, str):
+        if isinstance(skills, unicode):
             return skills
 
         skills = skills.get('op_required_skill')
@@ -215,6 +215,7 @@ def get_jobs_by_id(ids):
         print("Going for id {}".format(id))
         try:
             response = client.job.get_job_profile(id)
+            print(response)
         except upwork.exceptions.HTTP403ForbiddenError:
             continue
         buyer = response.get('buyer', {})
@@ -264,7 +265,7 @@ def get_jobs_from_ids():
 
     df.reset_index(inplace=True)
 
-    df.to_csv(config.DATA_FILE, index=False)
+    df.to_csv(config.DATA_FILE, index=False, encoding='utf-8-sig')
 
 
 if __name__ == "__main__":
@@ -281,5 +282,9 @@ if __name__ == "__main__":
                     'computer vision'
                    ]
     
-    search_jobs(search_terms)
+    # search_jobs(search_terms)
+    # get_jobs_from_ids()
+
+    df = get_jobs_by_id(["~018dd0748bff89c218"])
+    print(df)
     
