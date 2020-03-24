@@ -51,20 +51,21 @@ def safe_load_data_file():
     else:
         print("CSV exists, reading data and appending...")
         df = pd.read_csv(config.DATA_FILE, names=config.FIELDS_NAMES, header=0, index_col=0)
-        df.reset_index(inplace=True)
+        df.reset_index(inplace=True, drop=False)
 
     return df
    
 
 def save_results_to_csv(results):
     df = safe_load_data_file()
+    df.set_index('id', inplace=True, drop=True)
 
     for result in results:
         if not result['id'] in df.index:
             row = craft_df_row(result)
             df = df.append(row)
 
-    df.reset_index(inplace=True, drop=True)
+    df.reset_index(inplace=True, drop=False)
     df.to_csv(config.DATA_FILE, index=False)
 
 
@@ -215,7 +216,6 @@ def get_jobs_by_id(ids):
         print("Going for id {}".format(id))
         try:
             response = client.job.get_job_profile(id)
-            print(response)
         except upwork.exceptions.HTTP403ForbiddenError:
             continue
         buyer = response.get('buyer', {})
@@ -282,9 +282,5 @@ if __name__ == "__main__":
                     'computer vision'
                    ]
     
-    # search_jobs(search_terms)
-    # get_jobs_from_ids()
-
-    df = get_jobs_by_id(["~018dd0748bff89c218"])
-    print(df)
-    
+    search_jobs(search_terms)
+    # get_jobs_from_ids()    
