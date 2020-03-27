@@ -2,8 +2,10 @@ import React from "react";
 import "./ClassSelector.css";
 
 const ClassSelector = ({ id, clickHandler, selectedOption }) => {
-  let labelClass = "rounded-lg shadow-md p-6 hover:cursor-pointer ";
-  let onClass = "bg-teal-400";
+  let labelClass =
+    "rounded-lg shadow-md hover:cursor-pointer py-4 font-semibold ";
+  let onClass = "bg-teal-400 ";
+  let offClass = "";
 
   let class1Value = "Good";
   let class2Value = "Maybe";
@@ -11,7 +13,7 @@ const ClassSelector = ({ id, clickHandler, selectedOption }) => {
 
   // https://blog.bitsrc.io/customise-radio-buttons-without-compromising-accessibility-b03061b5ba93
   return (
-    <div className="flex flex-col flex-1 items-center justify-around h-full">
+    <div className="flex flex-col w-1/6 items-center justify-around">
       <div>
         <input
           id={`class1-${id}`}
@@ -25,7 +27,9 @@ const ClassSelector = ({ id, clickHandler, selectedOption }) => {
         />
         <label
           className={
-            labelClass + (selectedOption === class1Value ? onClass : "")
+            labelClass +
+            (selectedOption === class1Value ? onClass : offClass) +
+            "px-5"
           }
           htmlFor={`class1-${id}`}
         >
@@ -46,7 +50,9 @@ const ClassSelector = ({ id, clickHandler, selectedOption }) => {
         />
         <label
           className={
-            labelClass + (selectedOption === class2Value ? onClass : "")
+            labelClass +
+            (selectedOption === class2Value ? onClass : offClass) +
+            "px-4"
           }
           htmlFor={`class2-${id}`}
         >
@@ -67,7 +73,9 @@ const ClassSelector = ({ id, clickHandler, selectedOption }) => {
         />
         <label
           className={
-            labelClass + (selectedOption === class3Value ? onClass : "")
+            labelClass +
+            (selectedOption === class3Value ? onClass : offClass) +
+            "px-6"
           }
           htmlFor={`class3-${id}`}
         >

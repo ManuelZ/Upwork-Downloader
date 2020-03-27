@@ -6,7 +6,7 @@ import { FaRegCopy } from "react-icons/fa";
 
 const Job = ({ id, details, handler }) => {
   let jobHeader = (
-    <div className="flex flex-col pb-2 border-b w-full">
+    <div className="flex flex-col w-5/6 pb-2 border-b">
       <div className="flex flex-row justify-between">
         <div className="font-bold text-xl mb-2 w-5/6">
           <span>{details.title}</span>
@@ -29,18 +29,21 @@ const Job = ({ id, details, handler }) => {
   );
 
   return (
-    <div className="flex flex-row w-full rounded shadow-lg text-left mb-5 min-h-50">
-      <div className="w-1/6">
+    <div className="flex flex-col w-full rounded shadow-lg text-left mb-5 min-h-50 items-end">
+      <div className="flex flex-row w-full px-6 py-4">
+        <div className="flex justify-center p-4  w-1/6">
+          <span className="text-sm">GOOD??? 75%</span>
+        </div>
+        {jobHeader}
+      </div>
+      <div className="flex flex-row flex-grow w-full p-4">
         <ClassSelector
           id={id}
           clickHandler={handler}
           selectedOption={details.label}
         />
-      </div>
 
-      <div className="flex flex-col w-5/6 px-6 py-4">
-        {jobHeader}
-        <div className="py-4 break-words whitespace-pre-line">
+        <div className="w-5/6 py-4 break-words whitespace-pre-line">
           {details.snippet}
         </div>
       </div>
