@@ -8,3 +8,4 @@ access_token
 *.secret
 trashcan.py
 ids.txt
+tailwind.css
