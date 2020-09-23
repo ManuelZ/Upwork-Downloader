@@ -5,12 +5,12 @@ const Reader = ({ handleResults }) => {
   let data = null;
   let labels = null;
 
-  const handleFileChosen = file => {
+  const handleFileChosen = (file) => {
     const reader = new FileReader();
 
-    reader.onloadend = e => {
+    reader.onloadend = (e) => {
       let results = readString(reader.result, { header: true });
-      if (file.name == "labels.csv") {
+      if (file.name === "labels.csv") {
         labels = results;
       } else {
         data = results;
@@ -39,7 +39,7 @@ const Reader = ({ handleResults }) => {
           id="file"
           className=""
           accept=".csv"
-          onChange={e => handleFileChosen(e.target.files[0])}
+          onChange={(e) => handleFileChosen(e.target.files[0])}
         />
       </div>
       <div className="flex flex-col items-start py-3">
@@ -49,7 +49,7 @@ const Reader = ({ handleResults }) => {
           id="file"
           className=""
           accept=".csv"
-          onChange={e => handleFileChosen(e.target.files[0])}
+          onChange={(e) => handleFileChosen(e.target.files[0])}
         />
       </div>
     </div>
