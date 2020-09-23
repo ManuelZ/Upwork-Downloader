@@ -4,16 +4,18 @@
 
 This project consists of:
 
-- A script to download jobs data from upwork based in an input query,
-- An Electron user interface to go through the downloaded jobs and mark them as interesting or not.
-- A Machine Learning setup to learn from the labeled projects and classify unseen ones.
+- A script to download jobs' data from upwork based in an input query.
+- An [Electron](https://www.electronjs.org/) user interface to go through the downloaded jobs and mark them as interesting or not.
+- A Machine Learning setup to learn from the labeled jobs and classify unseen ones.
 
-## Instructions
+## Setup Instructions
+
+0. Clone this repository.
 
 1. Request an API key from Upwork at https://www.upwork.com/services/api/apply.
    You can see your current available api keys in https://www.upwork.com/services/api/keys
 
-2. Create an `api_key.secret` file with the following contents:
+2. Create a file `./api_key.secret`, with the following contents:
 
 ```
 PUBLIC API KEY PROVIDED BY UPWORK
@@ -23,6 +25,11 @@ SECRET KEY PROVIDED BY UPWORK
 3. Run the `upwork_downloader.py` file. The output data will be saved in `./data/data.csv`.
 
 4. Change directory into `./upwork-downloader-ui` and follow the `README` instructions (which are basically running `npm run` and `npm run electron`).
+
+## Requirements
+
+- The python-upwork package only supports Python 2, so you will need Python 2 to run the `upwork_downloader.py` script.
+- The machine learning code uses Python 3.
 
 ### TODOs:
 
