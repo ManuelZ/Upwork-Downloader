@@ -32,7 +32,7 @@
   "scripts": {
     "electron": "cross-env NODE_ENV=dev nodemon --exec \"\"electron .\"\"",
     "tailwind:css": "./node_modules/.bin/tailwind build src/css/tailwind.src.css -o src/css/tailwind.css",
-    "start": "cross-env BROWSER=none npm run tailwind:css && react-scripts start",
+    "start": "npm run tailwind:css && cross-env BROWSER=none react-scripts start",
     "build": "npm run tailwind:css && react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
