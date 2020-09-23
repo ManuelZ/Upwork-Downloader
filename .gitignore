@@ -5,3 +5,6 @@ access_token
 .ipynb_checkpoints/*
 
 *.csv
+*.secret
+trashcan.py
+ids.txt

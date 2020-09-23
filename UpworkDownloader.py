@@ -1,12 +1,12 @@
 # Built-in imports
 from __future__ import print_function
 from os.path import exists, isfile
+import re
 import os
 import sys
-import certifi
 import time
+import certifi
 from datetime import datetime
-import re
 
 # External imports
 import upwork
@@ -30,18 +30,14 @@ def fix_module_import():
 
 
 def get_client(public_key, secret_key, oauth_access_token, oauth_access_token_secret):
-    """ Creates a full authenticated client object. """
-    return upwork.Client(public_key, secret_key, oauth_access_token, oauth_access_token_secret)
+    """ Create a full authenticated client object. """
 
-
-def get_private_info(client):
-    data_dict = client.auth.get_info()
-    print(data_dict["info"])
-
-
-def get_categories(client):
-    categories = client.provider_v2.get_categories_metadata()
-    return [to_unicode(c['title']) for c in categories]
+    return upwork.Client(
+        public_key,
+        secret_key,
+        oauth_access_token,
+        oauth_access_token_secret
+    )
 
 
 def safe_load_data_file():
@@ -58,14 +54,14 @@ def safe_load_data_file():
 
 def save_results_to_csv(results):
     df = safe_load_data_file()
-    df.set_index('id', inplace=True, drop=True)
+    df.set_index('id', inplace=True, drop=False)
 
     for result in results:
         if not result['id'] in df.index:
             row = craft_df_row(result)
             df = df.append(row)
 
-    df.reset_index(inplace=True, drop=False)
+    df.reset_index(inplace=True, drop=True)
     df.to_csv(config.DATA_FILE, index=False)
 
 
@@ -95,9 +91,7 @@ def craft_df_row(result):
 
 
 def get_access_token():
-    """
-    Obtains an Access Token and Secret.
-    """
+    """ Obtains an Access Token and Secret """
 
     #public key, secret key
     client = upwork.Client(config.consumer_key, config.consumer_secret)
@@ -111,7 +105,7 @@ def get_access_token():
     #(verifier code), you are ready to request Upwork Server an Access token
     (access_token, access_token_secret) = client.auth.get_access_token(oauth_verifier)
 
-    with open("access_token", "w") as f:
+    with open(config.ACCESS_TOKEN_FILENAME, "w") as f:
         f.write(access_token+"\n")
         f.write(access_token_secret)
 
