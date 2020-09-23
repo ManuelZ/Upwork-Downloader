@@ -316,5 +316,7 @@ if __name__ == "__main__":
         'computer vision'
     ]
     
+    # Will save jobs in a csv file defined in config.py
     search_jobs(search_terms)
+    
     # get_jobs_from_ids('data/ids.txt')    
