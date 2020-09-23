@@ -41,12 +41,18 @@ def get_client(public_key, secret_key, oauth_access_token, oauth_access_token_se
 
 
 def safe_load_data_file():
+    """ Load jobs data """
+
     if not isfile(config.DATA_FILE):
-        print("CSV doesn't exist, creating...")
+        print("CSV doesn't exist, creating one...")
         df = pd.DataFrame(columns=config.FIELDS_NAMES)
+    
     else:
         print("CSV exists, reading data and appending...")
-        df = pd.read_csv(config.DATA_FILE, names=config.FIELDS_NAMES, header=0, index_col=0)
+        df = pd.read_csv(config.DATA_FILE, 
+                         names=config.FIELDS_NAMES, 
+                         header=0,
+                         index_col=0)
         df.reset_index(inplace=True, drop=False)
 
     return df
@@ -66,24 +72,24 @@ def save_results_to_csv(results):
 
 
 def craft_df_row(result):
+    """ Return a Pandas Series with name and column index """
+    
     row = []
     for key in config.FIELDS_NAMES:
         if key == 'skills':
             row.append("; ".join(result[key]))
             continue
-        
-        # elif key == 'snippet':
-        #      result[key] = re.sub('\s+', ' ', result[key])
              
         elif len(key.split(".")) == 2:
             key1, key2 = key.split(".")
             client = result.get(key1)
             client_property = client.get(key2)
+            
             if key == 'client.feedback':
                 client_property = "{:.2f}".format(client_property)
+            
             row.append(to_unicode(client_property))
             continue
-
 
         row.append(to_unicode(result[key]))
     
@@ -91,19 +97,25 @@ def craft_df_row(result):
 
 
 def get_access_token():
-    """ Obtains an Access Token and Secret """
+    """ Request an Access Token and Access Token Secret """
 
-    #public key, secret key
-    client = upwork.Client(config.consumer_key, config.consumer_secret)
+    try:
+        with open(config.API_KEY_FILENAME, "r") as f:
+            key = f.readline()[:-1]
+            secret = f.readline()
+    except:
+        print("Can't load the API key.")
+
+    client = upwork.Client(key, secret)
     request_token, request_token_secret = client.auth.get_request_token()
 
     oauth_verifier = raw_input(
         'Please enter the verification code you get '
-        'following this link:\n{0}\n\n> '.format(client.auth.get_authorize_url()))
+        'following this link:\n{0}\n\n'.format(client.auth.get_authorize_url()))
 
-    #Once you receive the request token and the resource owner's authorization
-    #(verifier code), you are ready to request Upwork Server an Access token
-    (access_token, access_token_secret) = client.auth.get_access_token(oauth_verifier)
+    # Once you receive the request token and the resource owner's authorization
+    # (verifier code), you are ready to request Upwork Server an Access token
+    access_token, access_token_secret = client.auth.get_access_token(oauth_verifier)
 
     with open(config.ACCESS_TOKEN_FILENAME, "w") as f:
         f.write(access_token+"\n")
@@ -113,14 +125,19 @@ def get_access_token():
 
 
 def load_access_token():
+    """
+    Try to load an access token locally. If not available, start an OAuth flow. 
+    """
+    
     try:
-        with open("access_token", "r") as f:
-            access_token = f.readline()[0:-1]
+        with open(config.ACCESS_TOKEN_FILENAME, 'r') as f:
+            access_token = f.readline()[:-1]
             access_token_secret = f.readline()
 
     except IOError as strerror:
         print("EXCEPTION! {}".format(strerror))
         access_token, access_token_secret = get_access_token()
+    
     return {
         'oauth_access_token': access_token,
         'oauth_access_token_secret': access_token_secret
@@ -130,15 +147,19 @@ def load_access_token():
 def search_jobs(terms):
     """ """
     
-    # At least one of the `q`, `title`, `skill` parameters should be specified.
+    # At least one of the `q`, `title` or `skills` parameters required
     data = {
-        # Searches for the title of the job's profile. 
+        # Search for the title of the job's profile
         # 'title': '',
-        # The search query.
+        #
+        # The search query
         'q': '',  # Terms treated with AND
-        # Searches for skills in the job's profile
+        #
+        # Search for skills in the job's profile
         # 'skills': ['python'],  # Skills treated with OR
+        #
         'job_status': 'open',
+        #
         'days_posted': config.DAYS_BACK_TO_SEARCH,
         # 'category2': [ # only searches in ONE category at a time, the last
         #     'Data Science & Analytics',
@@ -153,18 +174,23 @@ def search_jobs(terms):
 
         for i in range(0, config.MAX_ENTRIES_PER_TERM, config.ENTRIES_PER_RESULT_PAGE):
             time.sleep(1.5) # Default API limit
-            results = client.provider_v2.search_jobs(data=data,
-                                                     page_offset="{}".format(i),
-                                                     page_size=config.ENTRIES_PER_RESULT_PAGE)
+            
+            results = client.provider_v2.search_jobs(
+                data=data,
+                page_offset="{}".format(i),
+                page_size=config.ENTRIES_PER_RESULT_PAGE
+            )
+
             if results:
                 print("Fetched {} results for term '{}'".format(len(results), term))
                 save_results_to_csv(results)
-                if len(results) < config.ENTRIES_PER_RESULT_PAGE:
-                    break
+                if len(results) < config.ENTRIES_PER_RESULT_PAGE: break
 
 
 def get_jobs_by_id(ids):
-    """Return detailed profile information about the job. This method returns an exhaustive list of attributes associated with the job.
+    """
+    Return detailed profile information about the job. 
+    This method returns an exhaustive list of attributes associated with the job.
     """
 
     df = pd.DataFrame(columns=config.FIELDS_NAMES)
@@ -264,10 +290,13 @@ def get_jobs_from_ids():
 
 if __name__ == "__main__":
     fix_module_import()
+
     credentials = load_access_token()
+    
     client = get_client(config.consumer_key,
                         config.consumer_secret,
                         **credentials)
+    
     search_terms = ['machine learning',
                     'python',
                     'artificial intelligence',
