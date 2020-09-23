@@ -148,7 +148,7 @@ def load_access_token():
 
 
 def search_jobs(terms):
-    """ """
+    """ Search and save jobs """
     
     # At least one of the `q`, `title` or `skills` parameters required
     data = {
@@ -275,11 +275,13 @@ def load_ids_from_file(filename):
         return [line.rstrip() for line in f]
 
 
-def get_jobs_from_ids():
+def get_jobs_from_ids(ids_filename):
+    """ """
+
     df = safe_load_data_file()
     df.set_index('id', inplace=True)
 
-    ids = load_ids_from_file('data/ids.txt')
+    ids = load_ids_from_file(ids_filename)
     good_jobs = get_jobs_by_id(ids)
 
     df = pd.concat([df, good_jobs], axis=0)
@@ -296,20 +298,23 @@ if __name__ == "__main__":
     fix_module_import()
 
     api_key, api_key_secret = load_api_key()
-    
+
     credentials = load_access_token()
     
-    client = get_client(api_key,
-                        api_key_secret,
-                        **credentials)
+    client = get_client(
+        api_key,
+        api_key_secret,
+        **credentials
+    )
     
-    search_terms = ['machine learning',
-                    'python',
-                    'artificial intelligence',
-                    'opencv',
-                    'time series',
-                    'computer vision'
-                   ]
+    search_terms = [
+        'machine learning',
+        'python',
+        'artificial intelligence',
+        'opencv',
+        'time series',
+        'computer vision'
+    ]
     
     search_jobs(search_terms)
-    # get_jobs_from_ids()    
+    # get_jobs_from_ids('data/ids.txt')    
