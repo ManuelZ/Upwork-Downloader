@@ -96,17 +96,20 @@ def craft_df_row(result):
     return pd.Series(row, name=result['id'], index=config.FIELDS_NAMES)
 
 
-def get_access_token():
-    """ Request an Access Token and Access Token Secret """
-
+def load_api_key():
     try:
         with open(config.API_KEY_FILENAME, "r") as f:
             key = f.readline()[:-1]
             secret = f.readline()
+        return key, secret
     except:
         print("Can't load the API key.")
 
-    client = upwork.Client(key, secret)
+def request_access_token():
+    """ Request an Access Token and Access Token Secret """
+
+    api_key, api_key_secret = load_api_key()
+    client = upwork.Client(api_key, api_key_secret)
     request_token, request_token_secret = client.auth.get_request_token()
 
     oauth_verifier = raw_input(
@@ -136,7 +139,7 @@ def load_access_token():
 
     except IOError as strerror:
         print("EXCEPTION! {}".format(strerror))
-        access_token, access_token_secret = get_access_token()
+        access_token, access_token_secret = request_access_token()
     
     return {
         'oauth_access_token': access_token,
@@ -184,7 +187,8 @@ def search_jobs(terms):
             if results:
                 print("Fetched {} results for term '{}'".format(len(results), term))
                 save_results_to_csv(results)
-                if len(results) < config.ENTRIES_PER_RESULT_PAGE: break
+                if len(results) < config.ENTRIES_PER_RESULT_PAGE:
+                    break
 
 
 def get_jobs_by_id(ids):
@@ -291,10 +295,12 @@ def get_jobs_from_ids():
 if __name__ == "__main__":
     fix_module_import()
 
+    api_key, api_key_secret = load_api_key()
+    
     credentials = load_access_token()
     
-    client = get_client(config.consumer_key,
-                        config.consumer_secret,
+    client = get_client(api_key,
+                        api_key_secret,
                         **credentials)
     
     search_terms = ['machine learning',
