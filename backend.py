@@ -11,22 +11,22 @@ from flask import g # for sqlite3
 from flask_cors import CORS
 import pandas as pd
 
-DATABASE = 'jobs_db.sqlite3'
+from config import DATABASE
 
-# Local imports
-# from upwork_downloader import search_jobs
 
 app = Flask(__name__)
 CORS(app)
 
+
 @app.route('/predict', methods=['POST'])
 def predict():
-     return json.dumps({'prediction': list(prediction)})
+     pass
+
 
 @app.route('/download', methods=['POST'])
 def download():
-    # search_jobs()
-    return "Downloading..."
+    pass
+
 
 def get_conn():
     """
@@ -164,6 +164,7 @@ def get_all_jobs():
     
     finally:
         return jsonify({'msg':msg, 'data':data})
+
 
 @app.route('/update_job', methods = ['GET', 'POST'])
 def update_job():
