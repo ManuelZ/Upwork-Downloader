@@ -7,6 +7,7 @@
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.4.1",
     "@testing-library/user-event": "^7.2.1",
+    "concurrently": "^5.3.0",
     "cross-env": "^7.0.0",
     "csv-writer": "^1.6.0",
     "electron": "^8.0.2",
@@ -30,9 +31,10 @@
     }
   },
   "scripts": {
-    "electron": "cross-env NODE_ENV=dev nodemon --exec \"\"electron .\"\"",
     "tailwind:css": "./node_modules/.bin/tailwind build src/css/tailwind.src.css -o src/css/tailwind.css",
     "start": "npm run tailwind:css && cross-env BROWSER=none react-scripts start",
+    "electron": "cross-env NODE_ENV=dev nodemon --exec \"\"electron .\"\"",
+    "both": "concurrently \"npm start\" \"npm run electron\"",
     "build": "npm run tailwind:css && react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
