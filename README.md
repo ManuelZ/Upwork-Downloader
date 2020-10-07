@@ -24,12 +24,11 @@ SECRET KEY PROVIDED BY UPWORK
 
 3. Run the `upwork_downloader.py` file. The output data will be saved in `./data/data.csv`.
 
-4. Change directory into `./upwork-downloader-ui` and follow the `README` instructions (which are basically running `npm run both`).
+4. Change directory into `./upwork-downloader-ui` and follow the `README` instructions.
 
 ## Requirements
 
-- The `python-upwork` package only supports Python 2, so you will need Python 2 to run the `upwork_downloader.py` script.
-- The machine learning code uses Python 3.
+- The `python-upwork` package requires Python 3.8+
 
 ### TODOs:
 
