@@ -1,6 +1,7 @@
 *.idea
 *.vscode
 *.pyc
+*.sqlite3
 access_token
 .ipynb_checkpoints/*
 
