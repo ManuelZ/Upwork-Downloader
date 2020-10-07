@@ -32,7 +32,7 @@ const Job = ({ id, details, handler }) => {
     <div className="flex flex-col w-full rounded shadow-lg text-left mb-5 min-h-50 items-end">
       <div className="flex flex-row w-full px-6 py-4">
         <div className="flex justify-center p-4  w-1/6">
-          <span className="text-sm">GOOD??? 75%</span>
+          <span className="text-sm"></span>
         </div>
         {jobHeader}
       </div>

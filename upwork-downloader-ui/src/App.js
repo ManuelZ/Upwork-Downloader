@@ -119,7 +119,6 @@ function App() {
 
   return (
     <div className="flex flex-col m-5 justify-center container mx-auto text-center p-4">
-      <div>Please load your data</div>
       <div className="flex flex-row justify-between w-3/4 container mx-auto">
         <Reader handleResults={handleCSVData} />
       </div>

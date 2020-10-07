@@ -17,7 +17,7 @@ const Reader = ({ handleResults }) => {
   return (
     <div className="border-b flex flex-col justify-between items-start py-3">
       <div className="flex flex-col items-start py-3">
-        <label className="font-bold">Data file</label>
+        <label className="font-bold">Load data</label>
         <button
           onClick={query_jobs}
           class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
