@@ -1,7 +1,5 @@
-httplib2
-oauth2
-urllib3
 python-upwork
-pandas==0.24
+pandas
 pytz
-
+flask
+flask_cors
