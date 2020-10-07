@@ -1,5 +1,7 @@
 # Upwork downloader and visualizer
 
+![User Interface](images/screenshot1.png)
+
 ## Summary
 
 This project consists of:
