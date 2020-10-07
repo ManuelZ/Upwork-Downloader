@@ -5,7 +5,7 @@ API_KEY_FILENAME = 'api_key.secret'
 ACCESS_TOKEN_FILENAME = 'access_token.secret'
 
 # Where to save all the downloaded jobs' data
-DATABASE = 'jobs_db.sqlite3'
+DATABASE = 'data/jobs_db.sqlite3'
 
 # 'id' must be the first field
 FIELDS_NAMES = [
