@@ -24,7 +24,7 @@ PUBLIC API KEY PROVIDED BY UPWORK
 SECRET KEY PROVIDED BY UPWORK
 ```
 
-3. Run the `upwork_downloader.py` file. The output data will be saved in `./data/data.csv`.
+3. Run the `upwork_downloader.py` file. The output data will be saved in `./data/jobs_db.sqlite3`.
 
 4. Change directory into `./upwork-downloader-ui` and follow the `README` instructions.
 
