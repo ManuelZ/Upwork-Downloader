@@ -1,43 +1,20 @@
 # Built-in imports
-from __future__ import print_function
 from os.path import exists, isfile
 import re
 import os
-import sys
 import time
-import certifi
+import sqlite3 as sql
 from datetime import datetime
 
 # External imports
 import upwork
+from upwork.routers.jobs import search
 import pandas as pd
 from pytz import timezone
-from pytz import all_timezones
 
 # Local imports
 import config
 from utils import to_unicode
-
-
-def fix_module_import():
-    """
-    The module ca_certs_locater.py from upwork isn't prepared for Windows.
-    """
-    module = sys.modules.get('upwork')
-    module.ca_certs_locater.get = lambda: \
-        os.path.abspath(certifi.where())
-    sys.modules['upwork'] = module
-
-
-def get_client(public_key, secret_key, oauth_access_token, oauth_access_token_secret):
-    """ Create a full authenticated client object. """
-
-    return upwork.Client(
-        public_key,
-        secret_key,
-        oauth_access_token,
-        oauth_access_token_secret
-    )
 
 
 def safe_load_data_file():
@@ -105,25 +82,38 @@ def load_api_key():
     except:
         print("Can't load the API key.")
 
+
 def request_access_token():
     """ Request an Access Token and Access Token Secret """
 
-    api_key, api_key_secret = load_api_key()
-    client = upwork.Client(api_key, api_key_secret)
-    request_token, request_token_secret = client.auth.get_request_token()
+    consumer_key, consumer_secret = load_api_key()
 
-    oauth_verifier = raw_input(
-        'Please enter the verification code you get '
-        'following this link:\n{0}\n\n'.format(client.auth.get_authorize_url()))
+    client_config = upwork.Config({
+        'consumer_key': consumer_key, 
+        'consumer_secret': consumer_secret
+    })
+    
+    client = upwork.Client(client_config)
 
-    # Once you receive the request token and the resource owner's authorization
-    # (verifier code), you are ready to request Upwork Server an Access token
-    access_token, access_token_secret = client.auth.get_access_token(oauth_verifier)
+    try:
+        client_config.access_token
+        client_config.access_token_secret
+    except AttributeError:
+        verifier = input(
+            f'Please enter the verification code you get '
+            f'following this link:\n{client.get_authorization_url()}\n\n>'
+        )
+
+        print('Retrieving keys.... ')
+        # Once you receive the request token and the resource owner's authorization
+        # (verifier code), you are ready to request Upwork Server an Access token
+        access_token, access_token_secret = client.get_access_token(verifier)
+        print('OK')
 
     with open(config.ACCESS_TOKEN_FILENAME, "w") as f:
         f.write(access_token+"\n")
         f.write(access_token_secret)
-
+    
     return [access_token, access_token_secret]
 
 
@@ -136,59 +126,40 @@ def load_access_token():
         with open(config.ACCESS_TOKEN_FILENAME, 'r') as f:
             access_token = f.readline()[:-1]
             access_token_secret = f.readline()
-
+    
     except IOError as strerror:
-        print("EXCEPTION! {}".format(strerror))
+        print(f"Error loading the local secrets: {strerror}")
         access_token, access_token_secret = request_access_token()
     
-    return {
-        'oauth_access_token': access_token,
-        'oauth_access_token_secret': access_token_secret
-    }
+    return access_token, access_token_secret
 
 
 def search_jobs(terms):
     """ Search and save jobs """
-    
-    # At least one of the `q`, `title` or `skills` parameters required
-    data = {
-        # Search for the title of the job's profile
-        # 'title': '',
-        #
-        # The search query
-        'q': '',  # Terms treated with AND
-        #
-        # Search for skills in the job's profile
-        # 'skills': ['python'],  # Skills treated with OR
-        #
-        'job_status': 'open',
-        #
-        'days_posted': config.DAYS_BACK_TO_SEARCH,
-        # 'category2': [ # only searches in ONE category at a time, the last
-        #     'Data Science & Analytics',
-        #     'Engineering & Architecture',
-        #     'Web, Mobile & Software Dev',
-        #     'IT & Networking'
-        # ],
-        }
-
+    final_results = []
     for term in search_terms:
-        data['q'] = term
 
         for i in range(0, config.MAX_ENTRIES_PER_TERM, config.ENTRIES_PER_RESULT_PAGE):
+            print(f"A new loop for {term}")
             time.sleep(1.5) # Default API limit
-            
-            results = client.provider_v2.search_jobs(
-                data=data,
-                page_offset="{}".format(i),
-                page_size=config.ENTRIES_PER_RESULT_PAGE
-            )
 
-            if results:
-                print("Fetched {} results for term '{}'".format(len(results), term))
-                save_results_to_csv(results)
-                if len(results) < config.ENTRIES_PER_RESULT_PAGE:
-                    break
+            params = {
+                'q': term.split(' '),  # Terms treated with AND
+                'job_status': 'open',
+                'days_posted': config.DAYS_BACK_TO_SEARCH,
+                'paging' : f'{i};{config.ENTRIES_PER_RESULT_PAGE}' # offset;count.
+            }
+
+            results = search.Api(client).find(params)
+            jobs = results.get('jobs', [])
+            final_results.extend(jobs)
+            
+            print(f'Fetched {len(jobs)} results for term "{term}"')
+
+            if len(jobs) < config.ENTRIES_PER_RESULT_PAGE:
+                break
+    
+    return final_results
 
 
 def get_jobs_by_id(ids):
@@ -294,19 +265,62 @@ def get_jobs_from_ids(ids_filename):
     df.to_csv(config.DATA_FILE, index=False, encoding='utf-8-sig')
 
 
+def add_records(records):
+    """
+    data: a list of tuples
+    """
+
+    # Transform the data into a list of lists
+    data = []
+    for record in records:
+        row = []
+        for field in config.FIELDS_NAMES:
+            if 'client' in field:
+                field = field.split('.')[1]
+                value = record.get('client').get(field, '')
+            else:
+                value = record.get(field, '')
+                if field == 'label':
+                    value = 'uncategorized'
+                elif field == 'skills':
+                    value = "; ".join(value)
+            row.append(value)
+        data.append(row)
+
+    try:
+        with sql.connect(config.DATABASE) as conn:
+            cur = conn.cursor()
+    
+            # Insert records with id that don't exist (id is the primary key)
+            insert_sql = "INSERT OR IGNORE INTO {} ({}) VALUES ({})".format(
+                config.TABLE_NAME,
+                ','.join(f'"{f}"' for f in config.FIELDS_NAMES),
+                ','.join(['?'] * len(config.FIELDS_NAMES))
+            )
+
+            # Bulk insert
+            cur.executemany(insert_sql, data)
+            conn.commit()
+    
+    except Exception as e:
+        print(e)
+
+
 if __name__ == "__main__":
-    fix_module_import()
 
     api_key, api_key_secret = load_api_key()
 
-    credentials = load_access_token()
+    access_token, access_token_secret = load_access_token()
     
-    client = get_client(
-        api_key,
-        api_key_secret,
-        **credentials
-    )
-    
+    client_config = upwork.Config({
+        'consumer_key': api_key,
+        'consumer_secret': api_key_secret,
+        'access_token': access_token,
+        'access_token_secret': access_token_secret
+    })
+
+    client = upwork.Client(client_config)
+
     search_terms = [
         'machine learning',
         'python',
@@ -317,6 +331,5 @@ if __name__ == "__main__":
     ]
     
     # Will save jobs in a csv file defined in config.py
-    search_jobs(search_terms)
-    
-    # get_jobs_from_ids('data/ids.txt')    
+    jobs = search_jobs(search_terms)
+    add_records(jobs)

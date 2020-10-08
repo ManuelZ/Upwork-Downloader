@@ -7,6 +7,8 @@ ACCESS_TOKEN_FILENAME = 'access_token.secret'
 # Where to save all the downloaded jobs' data
 DATABASE = 'data/jobs_db.sqlite3'
 
+TABLE_NAME = 'jobs'
+
 # 'id' must be the first field
 FIELDS_NAMES = [
   'id',
@@ -27,7 +29,8 @@ FIELDS_NAMES = [
   'client.jobs_posted',
   'client.payment_verification_status',
   'client.past_hires',
-  'client.country'
+  'client.country',
+  'label'
 ]
 
 JOB_FIELDS = [
@@ -48,5 +51,5 @@ JOB_FIELDS = [
 ]
 
 MAX_ENTRIES_PER_TERM = 2000
-ENTRIES_PER_RESULT_PAGE = 100 # do not modify
-DAYS_BACK_TO_SEARCH = 21
+ENTRIES_PER_RESULT_PAGE = 100 # Do not increase more than 100
+DAYS_BACK_TO_SEARCH = 30
