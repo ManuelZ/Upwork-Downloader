@@ -142,17 +142,28 @@ def add_record():
             return jsonify({'msg':msg})
 
 
-@app.route('/get_all_jobs', methods = ['GET'])
-def get_all_jobs():
+@app.route('/get_jobs', methods = ['GET'])
+def get_jobs():
     if request.args:
         limit = int(request.args.get('limit'))
         limit = limit if ((limit > 0) and (limit <1e6)) else 20
 
         offset = int(request.args.get('offset'))
         offset = offset if (offset >= 0 and offset <1e6) else 0
+
+        filters = request.args.get('filter', '')
+        if filters != '':
+            active_filter = ','.join(f'"{f.lower().title()}"' for f in filters.split(','))
+        else:
+            active_filter = ''
+    else:
+        msg = 'Missing parameters in the request'
+        
+        return jsonify({'msg': msg})
+    
     try:
         cur = get_conn().cursor()        
-        select_sql = f"SELECT * FROM jobs LIMIT {limit} OFFSET {offset}"
+        select_sql = f"SELECT * FROM jobs WHERE label IN ({active_filter}) LIMIT {limit} OFFSET {offset}"
         cur.execute(select_sql)
         rows = cur.fetchall()
         data = [dict(row) for row in rows]

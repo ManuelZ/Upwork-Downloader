@@ -120,7 +120,7 @@ function App() {
   return (
     <div className="flex flex-col m-5 justify-center container mx-auto text-center p-4">
       <div className="flex flex-row justify-between w-3/4 container mx-auto">
-        <Reader handleResults={handleCSVData} />
+        <Reader handleResults={handleCSVData} activeFilter={classFilter} />
       </div>
       <Filter classes={classes} onToggleFilter={toggleFilter} />
 

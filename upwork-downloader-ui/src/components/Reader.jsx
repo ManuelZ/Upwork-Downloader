@@ -1,14 +1,21 @@
 import React from "react";
 
-const Reader = ({ handleResults }) => {
+const Reader = ({ handleResults, activeFilter }) => {
   let data = null;
 
-  const query_jobs = async () => {
-    let response, results;
+  const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
-    response = await fetch(
-      "http://localhost:5000/get_all_jobs?limit=50&offset=0"
-    );
+  const query_jobs = async () => {
+    let response, request;
+
+    /* Return example: 'uncategorized,good' */
+    activeFilter = Object.entries(activeFilter)
+      .filter(([k, v]) => v === true)
+      .map(([k, v]) => k)
+      .join(",");
+
+    request = `http://localhost:5000/get_jobs?limit=50&offset=0&filter=${activeFilter}`;
+    response = await fetch(request);
     data = await response.json();
 
     handleResults(data);
@@ -20,7 +27,7 @@ const Reader = ({ handleResults }) => {
         <label className="font-bold">Load data</label>
         <button
           onClick={query_jobs}
-          class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
         >
           Load saved jobs
         </button>
