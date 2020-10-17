@@ -3,8 +3,6 @@ import React from "react";
 const Reader = ({ handleResults, activeFilter }) => {
   let data = null;
 
-  const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
-
   const query_jobs = async () => {
     let response, request;
 
@@ -14,7 +12,7 @@ const Reader = ({ handleResults, activeFilter }) => {
       .map(([k, v]) => k)
       .join(",");
 
-    request = `http://localhost:5000/get_jobs?limit=50&offset=0&filter=${activeFilter}`;
+    request = `http://localhost:5000/get_jobs?limit=10&offset=0&filter=${activeFilter}`;
     response = await fetch(request);
     data = await response.json();
 

@@ -178,6 +178,27 @@ def get_jobs():
         return jsonify({'msg':msg, 'data':data})
 
 
+@app.route('/count_jobs', methods = ['GET'])
+def count_jobs():
+    
+    count_sql = "SELECT COUNT(*) from jobs WHERE label NOT IN ('Uncategorized')"
+
+    try:
+        conn = get_conn()
+        cur = conn.cursor()
+        cur.execute(count_sql)
+        rows = cur.fetchall()
+        data = [dict(row) for row in rows]
+        msg = data[0]['COUNT(*)']
+        
+    except Exception as e:
+        msg = f"Error in query: {e}"
+    
+    finally:
+        return jsonify({'msg':msg})
+
+
+
 @app.route('/update_job', methods = ['GET', 'POST'])
 def update_job():
     

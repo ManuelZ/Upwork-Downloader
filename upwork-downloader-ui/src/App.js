@@ -3,6 +3,7 @@ import Reader from "./components/Reader";
 import { withRouter } from "react-router-dom";
 import Job from "./components/Job";
 import Filter from "./components/Filter";
+import JobsCount from "./components/JobsCount";
 
 function App() {
   const [jobs, setJobs] = useState({});
@@ -14,7 +15,7 @@ function App() {
   });
 
   /* Handle the loaded CSV file */
-  function handleCSVData(data) {
+  function handleData(data) {
     let jobs = {};
     for (const job of data["data"]) {
       jobs[job.id] = { ...job };
@@ -119,8 +120,9 @@ function App() {
 
   return (
     <div className="flex flex-col m-5 justify-center container mx-auto text-center p-4">
+      <JobsCount />
       <div className="flex flex-row justify-between w-3/4 container mx-auto">
-        <Reader handleResults={handleCSVData} activeFilter={classFilter} />
+        <Reader handleResults={handleData} activeFilter={classFilter} />
       </div>
       <Filter classes={classes} onToggleFilter={toggleFilter} />
 
