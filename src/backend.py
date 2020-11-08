@@ -10,9 +10,16 @@ from flask import jsonify
 from flask import g # for sqlite3
 from flask_cors import CORS
 import pandas as pd
+import upwork
 
 # Local imports
 from config import DATABASE
+from config import SEARCH_TERMS
+from config import TABLE_NAME
+from upwork_downloader import load_api_key
+from upwork_downloader import load_access_token
+from upwork_downloader import search_jobs
+from upwork_downloader import add_records
 
 
 app = Flask(__name__)
@@ -26,7 +33,22 @@ def predict():
 
 @app.route('/download', methods=['POST'])
 def download():
-    pass
+    api_key, api_key_secret = load_api_key()
+
+    access_token, access_token_secret = load_access_token()
+    
+    client_config = upwork.Config({
+        'consumer_key': api_key,
+        'consumer_secret': api_key_secret,
+        'access_token': access_token,
+        'access_token_secret': access_token_secret
+    })
+
+    client = upwork.Client(client_config)
+
+    # Will save jobs in a csv file defined in config.py
+    jobs = search_jobs(SEARCH_TERMS)
+    add_records(jobs)
 
 
 def get_conn():
@@ -57,7 +79,7 @@ def create_table():
         conn = get_conn()
         cur = conn.cursor()
         create_table_sql = """
-            CREATE TABLE IF NOT EXISTS jobs (
+            CREATE TABLE {} (
                 id TEXT PRIMARY KEY,
                 title TEXT NOT NULL,
                 snippet TEXT NOT NULL,
@@ -69,7 +91,7 @@ def create_table():
                 url TEXT NOT NULL,
                 workload TEXT,
                 duration TEXT,
-                date_created TEXT,
+                date_created TIMESTAMP_TZ,
                 skills TEXT,
                 "client.feedback" INTEGER,
                 "client.reviews_count" INTEGER,
@@ -79,6 +101,7 @@ def create_table():
                 "client.country" TEXT,
                 label TEXT
             )"""
+        create_table_sql = create_table_sql.format(TABLE_NAME)
         cur.execute(create_table_sql)
         conn.commit()
         msg = 'Table created'
@@ -120,9 +143,10 @@ def add_record():
             ]
             
             # Construct the SQL request
-            insert_sql = "INSERT INTO jobs ({}) VALUES ({})".format(
+            insert_sql = "INSERT INTO {} ({}) VALUES ({})".format(
+                TABLE_NAME,
                 ','.join(fields),
-                ','.join(['?'] * 19)
+                ','.join(['?'] * len(fields))
             )
             
             # Extract the data from the POST
@@ -163,10 +187,11 @@ def get_jobs():
     
     try:
         cur = get_conn().cursor()        
-        select_sql = f"SELECT * FROM jobs WHERE label IN ({active_filter}) LIMIT {limit} OFFSET {offset}"
+        select_sql = f'SELECT * FROM {TABLE_NAME} WHERE label IN ({active_filter}) ORDER BY strftime("%Y-%m-%dT%H:%M:%SZ", date_created) DESC LIMIT {limit} OFFSET {offset}'
         cur.execute(select_sql)
         rows = cur.fetchall()
         data = [dict(row) for row in rows]
+        data = sorted(data, key=lambda k: k['date_created'])
         msg = 'Success'
     
     except Exception as e:
@@ -181,7 +206,7 @@ def get_jobs():
 @app.route('/count_jobs', methods = ['GET'])
 def count_jobs():
     
-    count_sql = "SELECT COUNT(*) from jobs WHERE label NOT IN ('Uncategorized')"
+    count_sql = f"SELECT COUNT(*) from {TABLE_NAME} WHERE label NOT IN ('Uncategorized')"
 
     try:
         conn = get_conn()
@@ -206,7 +231,7 @@ def update_job():
         id = request.args.get('id')
         label = request.args.get('label')
 
-    update_sql = "UPDATE jobs SET label=? WHERE id=?"
+    update_sql = f"UPDATE {TABLE_NAME} SET label=? WHERE id=?"
 
     try:
         conn = get_conn()

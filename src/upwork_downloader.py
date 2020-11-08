@@ -11,9 +11,11 @@ import upwork
 from upwork.routers.jobs import search
 import pandas as pd
 from pytz import timezone
+import requests
 
 # Local imports
 import config
+from config import SEARCH_TERMS
 from utils import to_unicode
 
 
@@ -137,7 +139,7 @@ def load_access_token():
 def search_jobs(terms):
     """ Search and save jobs """
     final_results = []
-    for term in search_terms:
+    for term in terms:
 
         for i in range(0, config.MAX_ENTRIES_PER_TERM, config.ENTRIES_PER_RESULT_PAGE):
             print(f"A new loop for {term}")
@@ -150,9 +152,18 @@ def search_jobs(terms):
                 'paging' : f'{i};{config.ENTRIES_PER_RESULT_PAGE}' # offset;count.
             }
 
-            results = search.Api(client).find(params)
-            jobs = results.get('jobs', [])
-            final_results.extend(jobs)
+            try:
+                results = search.Api(client).find(params)
+                jobs = results.get('jobs', [])
+                # Modify the date_created so that the timezone has a format of 
+                # "+00:00" instead of "+0000" since sqlite3 can only parse that
+                for job in jobs:
+                    job['date_created'] = datetime.strptime(
+                        job['date_created'], "%Y-%m-%dT%H:%M:%S%z").isoformat()
+                final_results.extend(jobs)
+            except requests.exceptions.ConnectionError as e:
+                print(f'Connection error, are you sure you have internet?')
+
             
             print(f'Fetched {len(jobs)} results for term "{term}"')
 
@@ -267,6 +278,7 @@ def get_jobs_from_ids(ids_filename):
 
 def add_records(records):
     """
+    Insert records in sqlite3 database.
     data: a list of tuples
     """
 
@@ -281,7 +293,7 @@ def add_records(records):
             else:
                 value = record.get(field, '')
                 if field == 'label':
-                    value = 'uncategorized'
+                    value = 'Uncategorized'
                 elif field == 'skills':
                     value = "; ".join(value)
             row.append(value)
@@ -321,15 +333,6 @@ if __name__ == "__main__":
 
     client = upwork.Client(client_config)
 
-    search_terms = [
-        'machine learning',
-        'python',
-        'artificial intelligence',
-        'opencv',
-        'time series',
-        'computer vision'
-    ]
-    
     # Will save jobs in a csv file defined in config.py
-    jobs = search_jobs(search_terms)
+    jobs = search_jobs(SEARCH_TERMS)
     add_records(jobs)

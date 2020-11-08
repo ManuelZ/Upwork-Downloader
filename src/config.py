@@ -50,6 +50,20 @@ JOB_FIELDS = [
   'op_pref_hourly_rate_max', # Client preferred maximum hourly rate
 ]
 
-MAX_ENTRIES_PER_TERM = 2000
+SEARCH_TERMS = [
+        'machine learning',
+        'python',
+        'artificial intelligence',
+        'opencv',
+        'time series',
+        'computer vision',
+        'optimization algorithm',
+        'raspberry pi',
+        'arduino',
+        'supervised learning',
+        'data extraction'
+    ]
+
+MAX_ENTRIES_PER_TERM = 20
 ENTRIES_PER_RESULT_PAGE = 100 # Do not increase more than 100
-DAYS_BACK_TO_SEARCH = 30
+DAYS_BACK_TO_SEARCH = 3
