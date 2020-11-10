@@ -1,7 +1,7 @@
 import React from "react";
-import "./ClassSelector.css";
+import "./LabelSelector.css";
 
-const ClassSelector = ({ id, clickHandler, selectedOption }) => {
+const LabelSelector = ({ id, clickHandler, selectedOption }) => {
   let labelClass =
     "rounded-lg shadow-md hover:cursor-pointer py-4 font-semibold ";
   let onClass = "bg-teal-400 ";
@@ -13,7 +13,7 @@ const ClassSelector = ({ id, clickHandler, selectedOption }) => {
 
   // https://blog.bitsrc.io/customise-radio-buttons-without-compromising-accessibility-b03061b5ba93
   return (
-    <div className="flex flex-col w-1/6 items-center justify-around">
+    <div className="flex flex-row lg:flex-col py-3 lg:py-0 lg:w-1/6 items-left justify-between lg:justify-around">
       <div>
         <input
           id={`class1-${id}`}
@@ -21,7 +21,7 @@ const ClassSelector = ({ id, clickHandler, selectedOption }) => {
           name={`classes-${id}`}
           value={class1Value}
           checked={selectedOption === class1Value}
-          onChange={changeEvent => {
+          onClick={changeEvent => {
             clickHandler(changeEvent);
           }}
         />
@@ -44,7 +44,7 @@ const ClassSelector = ({ id, clickHandler, selectedOption }) => {
           name={`classes-${id}`}
           value={class2Value}
           checked={selectedOption === class2Value}
-          onChange={changeEvent => {
+          onClick={changeEvent => {
             clickHandler(changeEvent);
           }}
         />
@@ -67,7 +67,7 @@ const ClassSelector = ({ id, clickHandler, selectedOption }) => {
           name={`classes-${id}`}
           value={class3Value}
           checked={selectedOption === class3Value}
-          onChange={changeEvent => {
+          onClick={changeEvent => {
             clickHandler(changeEvent);
           }}
         />
@@ -86,4 +86,4 @@ const ClassSelector = ({ id, clickHandler, selectedOption }) => {
   );
 };
 
-export default ClassSelector;
+export default LabelSelector;

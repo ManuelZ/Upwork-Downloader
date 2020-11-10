@@ -7,28 +7,55 @@ import sqlite3 as sql
 from flask import Flask
 from flask import request
 from flask import jsonify
+from flask import render_template
 from flask import g # for sqlite3
 from flask_cors import CORS
 import pandas as pd
 import upwork
 
 # Local imports
-from config import DATABASE
-from config import SEARCH_TERMS
-from config import TABLE_NAME
-from upwork_downloader import load_api_key
-from upwork_downloader import load_access_token
-from upwork_downloader import search_jobs
-from upwork_downloader import add_records
+from src.config import DATABASE
+from src.config import SEARCH_TERMS
+from src.config import TABLE_NAME
+from src.config import TIMESTAMP_FORMAT
+from src.upwork_downloader import load_api_key
+from src.upwork_downloader import load_access_token
+from src.upwork_downloader import search_jobs
+from src.upwork_downloader import add_records
+from src.learner import predict_unlabeled_jobs
 
 
-app = Flask(__name__)
+app = Flask(
+    __name__, 
+    static_folder = "../upwork-downloader-ui/build/static",
+    template_folder = "../upwork-downloader-ui/build"
+)
+
 CORS(app)
+
+
+def get_conn():
+    """
+    From:
+    https://flask.palletsprojects.com/en/rtd/patterns/sqlite3/
+    """
+
+    conn = getattr(g, '_database', None)
+    if conn is None:
+        conn = g._database = sql.connect(DATABASE)
+    conn.row_factory = sql.Row
+    
+    return conn
 
 
 @app.route('/predict', methods=['POST'])
 def predict():
-     pass
+     print("Predicting...")
+     jobs = predict_unlabeled_jobs()
+     jobs = [job.to_dict() for job in jobs]
+     print("Returning predictions...")
+     print(len(jobs))
+     return jsonify({'msg': jobs})
 
 
 @app.route('/download', methods=['POST'])
@@ -49,20 +76,6 @@ def download():
     # Will save jobs in a csv file defined in config.py
     jobs = search_jobs(SEARCH_TERMS)
     add_records(jobs)
-
-
-def get_conn():
-    """
-    From:
-    https://flask.palletsprojects.com/en/rtd/patterns/sqlite3/
-    """
-
-    conn = getattr(g, '_database', None)
-    if conn is None:
-        conn = g._database = sql.connect(DATABASE)
-    conn.row_factory = sql.Row
-    
-    return conn
 
 
 @app.teardown_appcontext
@@ -169,17 +182,22 @@ def add_record():
 @app.route('/get_jobs', methods = ['GET'])
 def get_jobs():
     if request.args:
-        limit = int(request.args.get('limit'))
-        limit = limit if ((limit > 0) and (limit <1e6)) else 20
+        try:
+            limit = int(request.args.get('limit'))
+            limit = limit if ((limit > 0) and (limit <1e6)) else 20
 
-        offset = int(request.args.get('offset'))
-        offset = offset if (offset >= 0 and offset <1e6) else 0
+            offset = int(request.args.get('offset'))
+            offset = offset if (offset >= 0 and offset <1e6) else 0
 
-        filters = request.args.get('filter', '')
-        if filters != '':
-            active_filter = ','.join(f'"{f.lower().title()}"' for f in filters.split(','))
-        else:
-            active_filter = ''
+            filters = request.args.get('filter', '')
+            if filters != '':
+                active_filter = ','.join(f'"{f.lower().title()}"' for f in filters.split(','))
+            else:
+                active_filter = ''
+        except Exception as e:
+            msg = f"Trouble when parsing the given arguments:\n{e}"
+            print(msg)
+            return jsonify({'msg': msg})
     else:
         msg = 'Missing parameters in the request'
         
@@ -223,7 +241,6 @@ def count_jobs():
         return jsonify({'msg':msg})
 
 
-
 @app.route('/update_job', methods = ['GET', 'POST'])
 def update_job():
     
@@ -251,6 +268,15 @@ def update_job():
     finally:
         return jsonify({'msg':msg})
 
+# This will be used to return the react app
+@app.route('/', defaults={'path': ''}, methods=['GET'])
+@app.route('/<path:path>')
+def catch_all(path):
+    return render_template("index.html")
+
 
 if __name__ == "__main__":
-    app.run(host='127.0.0.1', port=5000, debug=True)
+    
+    #app.run(host='127.0.0.1', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
+    

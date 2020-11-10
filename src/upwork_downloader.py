@@ -14,9 +14,9 @@ from pytz import timezone
 import requests
 
 # Local imports
-import config
-from config import SEARCH_TERMS
-from utils import to_unicode
+from src import config
+from src.config import SEARCH_TERMS
+from src.utils import to_unicode
 
 
 def safe_load_data_file():
