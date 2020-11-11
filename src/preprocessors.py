@@ -1,16 +1,16 @@
+# Built-in imports
 import string
 
-
+# External imports
 from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.feature_extraction.text import CountVectorizer
+from nltk import wordpunct_tokenize
+from nltk import WordNetLemmatizer
+from nltk import pos_tag
 from nltk import sent_tokenize
 from nltk.corpus import stopwords as sw
 from nltk.corpus import wordnet as wn
 from nltk.stem.snowball import SnowballStemmer
-from nltk import wordpunct_tokenize
-from nltk import WordNetLemmatizer
-from nltk import pos_tag
-from sklearn.feature_extraction.text import CountVectorizer
-
 
 class NLTKPreprocessor(BaseEstimator, TransformerMixin):
     """
