@@ -1,8 +1,2 @@
-python-upwork
-numpy
-pandas
+python-upwork==2
 pytz
-flask
-scikit-learn
-flask_cors
-nltk
