@@ -1,2 +1,5 @@
 python-upwork==2
+numpy
+pandas
+scikit-learn
 pytz
