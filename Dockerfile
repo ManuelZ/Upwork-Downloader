@@ -1,4 +1,8 @@
-FROM continuumio/miniconda3 AS build
+FROM debian:buster-slim AS build
+
+# Install Miniconda
+RUN wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-armv7l.sh
+RUN sh -b /bin/bash Miniconda3-latest-Linux-armv7l.sh
 
 # Source: https://pythonspeed.com/articles/conda-docker-image-size/
 
