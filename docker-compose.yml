@@ -1,0 +1,22 @@
+version: "3.8"
+
+services:
+
+  backend:
+    # https://docs.docker.com/compose/compose-file/#build
+    build:
+      context: .
+      dockerfile: ./backend/Dockerfile
+    volumes:
+      - ./data:/code/data
+    ports:
+      - 5000:5000
+    command: python3 src/backend.py
+  
+  user-interface:
+    build: ./upwork-downloader-ui
+    ports:
+      - 3000:3000
+    command: npm run both
+    environment:
+      EXAMPLE_ENV_VAR: test
