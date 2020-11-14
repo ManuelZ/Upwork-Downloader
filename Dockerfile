@@ -1,9 +1,15 @@
 FROM debian:buster-slim AS build
 
-RUN apt-get update && apt-get install --no-install-recommends -y wget ca-certificates
-# Install Miniconda
-RUN wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-armv7l.sh
-RUN sh -b /bin/bash Miniconda3-latest-Linux-armv7l.sh
+# Source https://www.scivision.dev/compile-install-python-beta-raspberry-pi/
+RUN apt-get update && apt-get install --no-install-recommends -y libffi-dev libbz2-dev liblzma-dev libsqlite3-dev libncurses5-dev libgdbm-dev zlib1g-dev libreadline-dev libssl-dev tk-dev build-essential libncursesw5-dev libc6-dev openssl git wget ca-certificates
+
+RUN wget https://github.com/python/cpython/archive/v3.8.6.tar.gz && tar xzfv v3.8.6.tar.gz 
+
+WORKDIR cpython-3.8.6/
+
+RUN ./configure --prefix=$HOME/.local --enable-optimizations
+
+RUN make -j -l 4 && make install
 
 # Source: https://pythonspeed.com/articles/conda-docker-image-size/
 
