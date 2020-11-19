@@ -32,7 +32,7 @@ This project consists of:
 PUBLIC API KEY PROVIDED BY UPWORK
 SECRET KEY PROVIDED BY UPWORK
 
-4. Run `docker-compose up`
+4. Run `docker-compose build` and then `docker-compose up`
 
 
 ## Requirements
