@@ -88,6 +88,9 @@ def search_jobs(client, terms):
     Args:
         client: An authenticated upwork.Client object
         terms : List of terms to use in the searches.
+    
+    Returns:
+        List of results
     """
 
     final_results = []
@@ -128,6 +131,8 @@ def search_jobs(client, terms):
 def add_records(records):
     """
     Insert records in sqlite3 database.
+
+    Args:
     data: a list of tuples
     """
 
