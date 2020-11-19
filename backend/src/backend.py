@@ -22,6 +22,7 @@ from src.upwork_downloader import load_access_token
 from src.upwork_downloader import search_jobs
 from src.upwork_downloader import add_records
 from src.learner import predict_unlabeled_jobs
+from src.exceptions import CredentialsNotFoundError
 
 
 app = Flask(
@@ -59,7 +60,11 @@ def predict():
 
 @app.route('/download', methods=['POST'])
 def download():
-    api_key, api_key_secret = load_api_key()
+    try:
+        api_key, api_key_secret = load_api_key()
+    except CredentialsNotFoundError as e:
+        import os
+        return jsonify({'msg': os.listdir("./data")})        
 
     access_token, access_token_secret = load_access_token()
     
@@ -72,9 +77,10 @@ def download():
 
     client = upwork.Client(client_config)
 
-    # Will save jobs in a csv file defined in config.py
-    jobs = search_jobs(SEARCH_TERMS)
+    jobs = search_jobs(client, SEARCH_TERMS)
     add_records(jobs)
+
+    return jsonify({'msg':"Done"})
 
 
 @app.teardown_appcontext

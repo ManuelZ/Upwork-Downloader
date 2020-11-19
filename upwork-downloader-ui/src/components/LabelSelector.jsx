@@ -20,7 +20,7 @@ const LabelSelector = ({ id, clickHandler, selectedOption }) => {
           type="radio"
           name={`classes-${id}`}
           value={class1Value}
-          checked={selectedOption === class1Value}
+          defaultChecked={selectedOption === class1Value}
           onClick={changeEvent => {
             clickHandler(changeEvent);
           }}
@@ -43,7 +43,7 @@ const LabelSelector = ({ id, clickHandler, selectedOption }) => {
           type="radio"
           name={`classes-${id}`}
           value={class2Value}
-          checked={selectedOption === class2Value}
+          defaultChecked={selectedOption === class2Value}
           onClick={changeEvent => {
             clickHandler(changeEvent);
           }}
@@ -66,7 +66,7 @@ const LabelSelector = ({ id, clickHandler, selectedOption }) => {
           type="radio"
           name={`classes-${id}`}
           value={class3Value}
-          checked={selectedOption === class3Value}
+          defaultChecked={selectedOption === class3Value}
           onClick={changeEvent => {
             clickHandler(changeEvent);
           }}

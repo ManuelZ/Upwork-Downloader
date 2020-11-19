@@ -12,6 +12,7 @@
     "electron": "^10.1.5",
     "electron-is-dev": "^1.2.0",
     "history": "^5.0.0",
+    "lodash": "^4.17.20",
     "moment": "^2.29.1",
     "react": "^17.0.1",
     "react-copy-to-clipboard": "^5.0.2",

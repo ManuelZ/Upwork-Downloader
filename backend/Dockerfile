@@ -10,9 +10,7 @@ COPY ./backend/src ./src
 
 ENV PYTHONPATH=/:/usr/lib/python3/dist-packages:$PYTHONPATH
 
-RUN python -c "import nltk; nltk.download('stopwords')"
-
-RUN pwd
-RUN ls
+# 
+RUN python -c "import nltk; nltk.download('stopwords'); nltk.download('punkt'); nltk.download('averaged_perceptron_tagger'); nltk.download('wordnet')"
 
 CMD [ "python", "src/backend.py" ] 

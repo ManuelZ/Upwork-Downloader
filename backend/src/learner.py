@@ -106,6 +106,10 @@ def predict_unlabeled_jobs(n_jobs=10, window_days=2):
     
     # Filter by date some jobs
     unlabeled = unlabeled.loc[unlabeled['date_created'] >= now - window, :]
+
+    print(unlabeled)
+    if unlabeled.shape[0] == 0:
+        return []
     
     # Predict a class
     predicted_class = model.predict(unlabeled)

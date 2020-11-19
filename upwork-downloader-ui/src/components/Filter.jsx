@@ -3,7 +3,7 @@ import Checkbox from "react-simple-checkbox";
 
 const Filter = ({ classes, onToggleFilter }) => (
   <>
-    <div className="uppercase text-gray-500 font-bold">
+    <div className="uppercase text-gray-500 font-bold text-center">
       Filter by job label
     </div>
     <div className="flex flex-col lg:flex-row pt-2 pb-4 justify-center">

@@ -17,7 +17,7 @@ import requests
 from src import config
 from src.config import SEARCH_TERMS
 from src.utils import to_unicode
-
+from src.exceptions import CredentialsNotFoundError
 
 def safe_load_data_file():
     """ Load jobs data """
@@ -82,7 +82,7 @@ def load_api_key():
             secret = f.readline()
         return key, secret
     except:
-        print("Can't load the API key.")
+        raise CredentialsNotFoundError
 
 
 def request_access_token():
@@ -136,7 +136,7 @@ def load_access_token():
     return access_token, access_token_secret
 
 
-def search_jobs(terms):
+def search_jobs(client, terms):
     """ Search and save jobs """
     final_results = []
     for term in terms:

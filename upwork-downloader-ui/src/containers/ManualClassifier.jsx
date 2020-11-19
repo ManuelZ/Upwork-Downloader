@@ -1,12 +1,14 @@
-import React, { useState,useCallback } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import Reader from "../components/Reader";
 import Job from "../components/Job";
 import Filter from "../components/Filter";
 import JobsCount from "../components/JobsCount";
 import { sortByDate, get_endpoint } from "../utils/utils";
+import Button from "../components/Button";
 
 const ManualClassifier = () => {
   const [jobs, setJobs] = useState({});
+  const [fetching, setFetching] = useState(false);
   const [classFilter, setClassFilter] = useState({
     good: true,
     maybe: true,
@@ -14,7 +16,10 @@ const ManualClassifier = () => {
     uncategorized: true,
   });
 
-  
+  const buttonRef = useRef(null);
+
+  const ENDPOINT = get_endpoint();
+
   /* Handle the loaded CSV file */
   function handleData(data) {
     let jobs = {};
@@ -24,8 +29,6 @@ const ManualClassifier = () => {
 
     setJobs(jobs);
   }
-
-  
 
   let classes = [
     {
@@ -79,62 +82,98 @@ const ManualClassifier = () => {
     /* Get the filter state for the given job label or use the "uncategorized" value as default */
     .filter(jobFilter);
 
+  /*
+  Explanation of useCallback:
+  handleClassSelection variable will have always the same object of the 
+  callback function between renderings of App. 
+  Source: https://dmitripavlutin.com/dont-overuse-react-usecallback/
+  */
+  const handleClassSelection = useCallback(
+    async (changeEvent) => {
+      let jobId = changeEvent.target.id.split("-")[1];
+      let selectedClass = changeEvent.target.value;
 
- const handleClassSelection = useCallback(async (changeEvent) => {
-  let jobId = changeEvent.target.id.split("-")[1];
-  let selectedClass = changeEvent.target.value;
+      setJobs((previousJobs) => {
+        /* Create a deep copy of the state */
+        let newJobs = {};
+        for (let id of Object.keys(previousJobs)) {
+          newJobs[id] = { ...previousJobs[id] };
+        }
 
-  setJobs((previousJobs) => {
-    /* Create a deep copy of the state */
-    let newJobs = {};
-    for (let id of Object.keys(previousJobs)) {
-      newJobs[id] = { ...previousJobs[id] };
+        /* Update only the job of interest */
+        newJobs[jobId].label = selectedClass;
+
+        return newJobs;
+      });
+
+      let response = await fetch(
+        `${ENDPOINT}/update_job?id=${jobId}&label=${selectedClass}`
+      );
+
+      if (!response.ok) {
+        // Display error message
+      }
+    },
+    [ENDPOINT]
+  ); // I don't really expect ENDPOINT to change, idk why I need this here just so to avoid a warning
+
+  const refillDatabase = () => {
+    if (buttonRef.current) {
+      buttonRef.current.setAttribute("disabled", "disabled");
     }
 
-    /* Update only the job of interest */
-    newJobs[jobId].label = selectedClass;
+    setFetching(true);
 
-    return newJobs;
-  });
+    fetch(`${ENDPOINT}/download`, { method: "POST" })
+      .then((response) => response.json())
+      .then((content) => {
+        console.log("Done fetching new jobs");
+        setFetching(false);
+        buttonRef.current.removeAttribute("disabled");
+      });
+  };
 
-  const ENDPOINT = get_endpoint();
-  let response = await fetch(
-    `${ENDPOINT}/update_job?id=${jobId}&label=${selectedClass}`
-  );
-
-  if (!response.ok) {
-    // Display error message
+  let content;
+  if (fetching) {
+    content = <div className="m-5 text-gray-700">Fetching new jobs...</div>;
   }
-}, []); 
+  content = filteredJobs
+    .sort(sortByDate)
+    .map(
+      (job, index) =>
+        job.id && (
+          <Job
+            key={job.id}
+            id={job.id}
+            details={job}
+            handler={handleClassSelection}
+          />
+        )
+    );
 
   return (
     <>
       <JobsCount />
-      <div className="flex flex-col justify-between px-4 lg:w-3/4 container mx-auto">
-        <Filter classes={classes} onToggleFilter={toggleFilter} />
-        <Reader handleResults={handleData} activeFilter={classFilter} />
+      <div className="flex flex-row justify-between px-4 container mx-auto">
+        <div className="flex w-1/6 items-center justify-center">
+          <div>
+            <Button
+              onClick={refillDatabase}
+              disabled={fetching}
+              buttonRef={buttonRef}
+              text="Refill database"
+            />
+          </div>
+        </div>
+        <div className="flex flex-col w-4/6">
+          <Filter classes={classes} onToggleFilter={toggleFilter} />
+          <Reader handleResults={handleData} activeFilter={classFilter} />
+        </div>
+        <div className="flex w-1/6"></div>
       </div>
 
       <div className="flex flex-col m-2 lg:m-5 p-0 lg:p-4 justify-center mx-auto text-center items-center">
-        {filteredJobs
-          .sort(sortByDate)
-          .map(
-            (job, index) =>
-              job.id && (
-                <Job
-                  key={job.id}
-                  id={job.id}
-                  details={job}
-                /*
-                  Explanation of useCallback:
-                  handleClassSelection variable will have always the same object of the 
-                  callback function between renderings of App. 
-                  Source: https://dmitripavlutin.com/dont-overuse-react-usecallback/
-                  */
-                  handler={handleClassSelection} // I don't really expect ENDPOINT to change, idk why I need this here just so to avoid a warning
-                />
-              )
-          )}
+        {content}
       </div>
     </>
   );

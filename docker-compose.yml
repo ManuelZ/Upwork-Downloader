@@ -9,14 +9,15 @@ services:
       dockerfile: ./backend/Dockerfile
     volumes:
       - ./data:/code/data
+      - ./access_token.secret:/code/access_token.secret
+      - ./api_key.secret:/code/api_key.secret
     ports:
       - 5000:5000
-    command: python3 src/backend.py
   
-  user-interface:
-    build: ./upwork-downloader-ui
-    ports:
-      - 3000:3000
-    command: npm run both
-    environment:
-      EXAMPLE_ENV_VAR: test
+  # user-interface:
+  #   build: ./upwork-downloader-ui
+  #   ports:
+  #     - 3000:3000
+  #   command: npm run both
+  #   environment:
+  #     EXAMPLE_ENV_VAR: test

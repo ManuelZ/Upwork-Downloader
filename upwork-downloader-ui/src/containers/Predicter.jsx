@@ -1,9 +1,11 @@
 import React, { useState, useRef } from "react";
 import { get_endpoint, sortByDate } from "../utils/utils";
 import Job from "../components/Job";
+import Button from "../components/Button";
+import { isEmpty, isNull } from "lodash";
 
 const Predicter = () => {
-  const [predicted, setPredicted] = useState({});
+  const [predicted, setPredicted] = useState(null);
   const [fetching, setFetching] = useState(false);
 
   const buttonRef = useRef(null);
@@ -57,31 +59,37 @@ const Predicter = () => {
     }
   };
 
+  let jobs;
+  if (fetching) {
+    jobs = <div className="m-5 text-gray-700">Loading predictions...</div>;
+  } else if (isNull(predicted)) {
+    jobs = <div></div>;
+  } else if (isEmpty(predicted)) {
+    jobs = <div className="m-5">No jobs to predict</div>;
+  } else {
+    jobs = Object.keys(predicted)
+      .map((jobKey) => ({ id: jobKey, ...predicted[jobKey] }))
+      .sort(sortByDate)
+      .map((job, index) => (
+        <Job
+          key={job.id}
+          id={job.id}
+          details={job}
+          handler={handleClassSelection}
+        />
+      ));
+  }
+
   return (
     <>
       <div className="flex flex-col m-5 justify-center container mx-auto text-center p-4 items-center">
-        PREDICTER
-        <button
-          ref={buttonRef}
+        <Button
           onClick={getPredictions}
-          className={
-            "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded " +
-            (fetching ? "opacity-50 cursor-not-allowed" : "")
-          }
-        >
-          Predict good jobs
-        </button>
-        {Object.keys(predicted)
-          .map((jobKey) => ({ id: jobKey, ...predicted[jobKey] }))
-          .sort(sortByDate)
-          .map((job, index) => (
-            <Job
-              key={job.id}
-              id={job.id}
-              details={job}
-              handler={handleClassSelection}
-            />
-          ))}
+          disabled={fetching}
+          buttonRef={buttonRef}
+          text="Predict good jobs"
+        />
+        {jobs}
       </div>
     </>
   );

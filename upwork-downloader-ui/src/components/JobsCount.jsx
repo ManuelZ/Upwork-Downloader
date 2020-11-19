@@ -22,7 +22,7 @@ const JobsCount = () => {
   });
 
   if (count === null) {
-    return <div> "Loading..."</div>;
+    return <div className="flex justify-end mx-2 text-sm pb-2 text-gray-600"> "Loading..."</div>;
   }
   return <div className="flex justify-end mx-2 text-sm pb-2 text-gray-600">{`${count} classified jobs`}</div>;
 };
