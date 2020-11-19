@@ -14,10 +14,10 @@ services:
     ports:
       - 5000:5000
   
-  # user-interface:
-  #   build: ./upwork-downloader-ui
-  #   ports:
-  #     - 3000:3000
-  #   command: npm run both
-  #   environment:
-  #     EXAMPLE_ENV_VAR: test
+  user-interface:
+    build: ./upwork-downloader-ui
+    ports:
+      - 3000:3000
+    command: npm start
+    # environment:
+    #   EXAMPLE_ENV_VAR: test

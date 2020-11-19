@@ -19,6 +19,7 @@ This project consists of:
 - A Machine Learning setup to learn from the labeled jobs and classify unseen ones.
 - TO BE DONE: automation of all the above steps.
 
+
 ## Setup Instructions
 
 1. Clone this repository.
@@ -47,3 +48,13 @@ Permitted Uses of the Upwork API. Your use of the Upwork API is limited to the p
 Allow Upwork Users to search for and browse Upwork job postings with a customized interface;
 ...
 ```
+
+## Technologies used:
+- Python
+- Flask
+- Sqlite3
+- Scikit-learn
+- Pandas
+- ReactJS (Hooks)
+- TailwindCSS
+- Docker
