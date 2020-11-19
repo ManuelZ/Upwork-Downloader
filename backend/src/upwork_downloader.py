@@ -186,7 +186,5 @@ if __name__ == "__main__":
     })
 
     client = upwork.Client(client_config)
-
-    # Will save jobs in a csv file defined in config.py
     jobs = search_jobs(client, SEARCH_TERMS)
     add_records(jobs)
