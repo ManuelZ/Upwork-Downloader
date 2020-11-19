@@ -1,4 +1,4 @@
-# Upwork downloader and visualizer
+# Upwork automatic jobs classifier
 
 ![User Interface 1](images/image1.png)
 
