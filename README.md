@@ -37,3 +37,13 @@ SECRET KEY PROVIDED BY UPWORK
 ## Requirements
 
 - The `python-upwork` package requires Python 3.8+
+
+## Note
+According to the [Upwork's API Terms of Use](https://www.upwork.com/legal#api), section 3, a project like this one is permitted:
+
+```
+Permitted Uses of the Upwork API. Your use of the Upwork API is limited to the purpose of facilitating your own or your Users’ use of the Upwork Site and Site Services. Some examples of permitted uses of the Upwork API would be to create Applications that:
+
+Allow Upwork Users to search for and browse Upwork job postings with a customized interface;
+...
+```
