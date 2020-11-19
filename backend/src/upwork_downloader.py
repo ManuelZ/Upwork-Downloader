@@ -125,11 +125,6 @@ def search_jobs(client, terms):
     return final_results
 
 
-def load_ids_from_file(filename):
-    with open(filename) as f:
-        return [line.rstrip() for line in f]
-
-
 def add_records(records):
     """
     Insert records in sqlite3 database.
