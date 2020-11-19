@@ -1,6 +1,6 @@
 # Upwork downloader and visualizer
 
-![User Interface](images/screenshot1.png)
+![User Interface 1](images/image1.png)
 
 ## Summary
 
