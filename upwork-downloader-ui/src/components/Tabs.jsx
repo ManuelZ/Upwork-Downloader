@@ -5,22 +5,6 @@ import { Routes, Route, Link, useLocation } from "react-router-dom";
 
 const Tabs = (props) => {
   const { pathname } = useLocation();
-  // const [activeTab, setActiveTab] = useState(pathname);
-
-  // useEffect(() => {
-  //   if (pathname == "/classifier") {
-
-  //   } else if (pathname == "predicter") {
-
-  //   }
-  // },  [pathname]);
-
-  // const onClick = (info) => {
-  //   let to = info.target.attributes.href.value;
-  //   if (to == "/predicter") {
-
-  //   }
-  // }
 
   const activeTabClass =
     "bg-white inline-block border-l border-t border-r rounded-t py-2 px-4 text-blue-700 font-semibold";
@@ -31,18 +15,18 @@ const Tabs = (props) => {
     <>
       {/* Tabs links */}
       <div className="flex flex-row mx-2 my-2 lg:mt-5 px-2 lg:pt-4 justify-start mx-auto text-center border-b">
-        <div className={pathname == "/classifier" ? "-mb-px mr-1" : "mr-1"}>
+        <div className={pathname === "/classifier" ? "-mb-px mr-1" : "mr-1"}>
           <Link
             to="/classifier"
-            className={pathname == "/classifier" ? activeTabClass : tabClass}
+            className={pathname === "/classifier" ? activeTabClass : tabClass}
           >
             Manual Classifier
           </Link>
         </div>
-        <div className={pathname == "/predicter" ? "-mb-px mr-1" : "mr-1"}>
+        <div className={pathname === "/predicter" ? "-mb-px mr-1" : "mr-1"}>
           <Link
             to="/predicter"
-            className={pathname == "/predicter" ? activeTabClass : tabClass}
+            className={pathname === "/predicter" ? activeTabClass : tabClass}
           >
             Predicter
           </Link>
