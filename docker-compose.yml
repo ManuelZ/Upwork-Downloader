@@ -19,5 +19,6 @@ services:
     ports:
       - 3000:3000
     command: npm start
+    # command: npm run build
     # environment:
     #   EXAMPLE_ENV_VAR: test
