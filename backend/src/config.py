@@ -1,11 +1,11 @@
 # File where the API key is stored
-API_KEY_FILENAME = 'api_key.secret'
+API_KEY_FILENAME = '../api_key.secret'
 
 # File where the access token and secret will be stored when authenticated
-ACCESS_TOKEN_FILENAME = 'access_token.secret'
+ACCESS_TOKEN_FILENAME = '../access_token.secret'
 
 # Where to save all the downloaded jobs' data
-DATABASE = './data/jobs_db.sqlite3'
+DATABASE = '../data/jobs_db.sqlite3'
 
 TABLE_NAME = 'jobs'
 

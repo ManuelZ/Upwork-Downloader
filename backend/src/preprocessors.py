@@ -3,14 +3,12 @@ import string
 
 # External imports
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.feature_extraction.text import CountVectorizer
 from nltk import wordpunct_tokenize
 from nltk import WordNetLemmatizer
 from nltk import pos_tag
 from nltk import sent_tokenize
 from nltk.corpus import stopwords as sw
 from nltk.corpus import wordnet as wn
-from nltk.stem.snowball import SnowballStemmer
 
 class NLTKPreprocessor(BaseEstimator, TransformerMixin):
     """
@@ -93,13 +91,13 @@ class NLTKPreprocessor(BaseEstimator, TransformerMixin):
         return self.lemmatizer.lemmatize(token, tag)
 
 
-
+from sklearn.feature_extraction.text import CountVectorizer
+from nltk.stem.snowball import SnowballStemmer
 stemmer = SnowballStemmer("english", ignore_stopwords=True)
 # Note: punctuation is completely ignored and always treated as a token separator by CountVectorizer
 class StemmedCountVectorizer(CountVectorizer): 
     """Source: building Machine Learning Systems with Python, 2nd ed."""
 
-
     def build_analyzer(self):
-        analyzer = super(StemmedCountVectorizer, self).build_analyzer()
+        analyzer = super().build_analyzer()
         return lambda doc: ([stemmer.stem(w) for w in analyzer(doc)])

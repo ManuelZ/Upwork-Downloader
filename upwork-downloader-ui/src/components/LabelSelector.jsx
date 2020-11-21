@@ -1,10 +1,9 @@
 import React from "react";
-import "./LabelSelector.css";
 
 const LabelSelector = ({ id, clickHandler, selectedOption }) => {
   let labelClass =
     "rounded-lg shadow-md hover:cursor-pointer py-4 font-semibold ";
-  let onClass = "bg-teal-400 ";
+  let onClass = "bg-green-400 ";
   let offClass = "";
 
   let class1Value = "Good";
@@ -24,6 +23,7 @@ const LabelSelector = ({ id, clickHandler, selectedOption }) => {
           onClick={changeEvent => {
             clickHandler(changeEvent);
           }}
+          className="opacity-0 absolute"
         />
         <label
           className={
@@ -47,6 +47,7 @@ const LabelSelector = ({ id, clickHandler, selectedOption }) => {
           onClick={changeEvent => {
             clickHandler(changeEvent);
           }}
+          className="opacity-0 absolute"
         />
         <label
           className={
@@ -70,6 +71,7 @@ const LabelSelector = ({ id, clickHandler, selectedOption }) => {
           onClick={changeEvent => {
             clickHandler(changeEvent);
           }}
+          className="opacity-0 absolute"
         />
         <label
           className={

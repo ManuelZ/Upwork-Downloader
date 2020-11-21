@@ -50,12 +50,11 @@ def get_conn():
 
 @app.route('/predict', methods=['POST'])
 def predict():
-     print("Predicting...")
-     jobs = predict_unlabeled_jobs()
-     jobs = [job.to_dict() for job in jobs]
-     print("Returning predictions...")
-     print(len(jobs))
-     return jsonify({'msg': jobs})
+    body = request.get_json()
+    retrain = True if body.get('retrain') == "true" else False
+    jobs, report = predict_unlabeled_jobs(retrain=retrain)
+    jobs = [job.to_dict() for job in jobs]
+    return jsonify({'msg': jobs, 'report':report.to_string()})
 
 
 @app.route('/download', methods=['POST'])
@@ -127,61 +126,6 @@ def create_table():
         msg = 'Error when creating table'
     finally:
         return jsonify({"msg": msg})
-
-
-@app.route('/add_record', methods = ['POST'])
-def add_record():
-    """ Modified from: https://pythonbasics.org/flask-sqlite/"""
-
-    if request.method == 'POST':
-        try:
-            conn = get_conn()
-            cur = conn.cursor()
-            
-            fields = [
-                'id',
-                'title',
-                'snippet',
-                'job_type',
-                'budget',
-                'job_status',
-                'category2',
-                'subcategory2',
-                'url',
-                'workload',
-                'duration',
-                'date_created',
-                'skills',
-                'client.feedback',
-                'client.reviews_count',
-                'client.jobs_posted',
-                'client.payment_verification_status',
-                'client.past_hires',
-                'client.country'
-            ]
-            
-            # Construct the SQL request
-            insert_sql = "INSERT INTO {} ({}) VALUES ({})".format(
-                TABLE_NAME,
-                ','.join(fields),
-                ','.join(['?'] * len(fields))
-            )
-            
-            # Extract the data from the POST
-            data = [request.form[f] for f in fields]
-
-            # Execute the SQL request
-            cur.execute(insert_sql, data)
-            conn.commit()
-            msg = "Record successfully added"
-        
-        except Exception as e:
-            conn.rollback()
-            print(e)
-            msg = "Error in insert operation"
-        
-        finally:
-            return jsonify({'msg':msg})
 
 
 @app.route('/get_jobs', methods = ['GET'])

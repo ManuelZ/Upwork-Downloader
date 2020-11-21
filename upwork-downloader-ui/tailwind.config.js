@@ -5,5 +5,7 @@ module.exports = {
   variants: {
     cursor: ["responsive", "hover", "focus"]
   },
-  plugins: []
+  plugins: [
+    require('@tailwindcss/forms'),
+  ]
 };

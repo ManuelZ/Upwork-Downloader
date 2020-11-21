@@ -8,9 +8,9 @@ services:
       context: .
       dockerfile: ./backend/Dockerfile
     volumes:
-      - ./data:/code/data
-      - ./access_token.secret:/code/access_token.secret
-      - ./api_key.secret:/code/api_key.secret
+      - ./data:/data
+      - ./access_token.secret:/access_token.secret
+      - ./api_key.secret:/api_key.secret
     ports:
       - 5000:5000
   

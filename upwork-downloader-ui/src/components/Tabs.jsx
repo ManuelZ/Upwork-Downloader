@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import ManualClassifier from "../containers/ManualClassifier";
 import Predicter from "../containers/Predicter";
 import { Routes, Route, Link, useLocation } from "react-router-dom";

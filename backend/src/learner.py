@@ -2,21 +2,27 @@
 from datetime import timedelta
 from datetime import datetime
 import sqlite3 as sql
-import logging
+from pathlib import Path
+from time import time
+import pickle
 
 # External imports
 import pytz
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
+from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import classification_report
-from sklearn.svm import LinearSVC
 from sklearn.decomposition import TruncatedSVD
+from sklearn.preprocessing import LabelEncoder
+from sklearn import svm
+import category_encoders as ce
+
 
 # Local imports
 from src.config import TIMESTAMP_FORMAT
@@ -27,52 +33,101 @@ from src.utils import load_database_data
 pd.set_option('display.max_colwidth', 1000)
 
 
-# stemmedVectorizer = StemmedCountVectorizer(lowercase=True,
-#                                            stop_words='english',
-#                                            analyzer='word',
-#                                            # tokenizer=,
-#                                            ngram_range=(2, 2),
-#                                            )
+def identity(arg):
+    """ Simple identity function used in TfidfVEctorizer as passthrough"""
+    return arg
 
-def train(X_train, y_train):
+
+def gen_parameters_from_log_space(low_value=0.0001, high_value=0.001, n_samples=5):
+    """
+    Generate a list of parameters by sampling uniformly from a logarithmic space
+    
+    E.g.
+           [ x   x  x | x  x x   |  x  x x  | x  x   x ]
+        0.0001      0.001       0.01       0.1         1
+    
+    Which will draw much more small numbers than larger ones.
+    """
+    a = np.log10(low_value)
+    b = np.log10(high_value)
+    r = np.sort(np.random.uniform(a, b, n_samples))
+    return 10 ** r
+
+
+def train(X_train, y_train, search=True):
+    """
+    Pass the data through a pipeline and return a trained model.
+
+    Args:
+        X_train: Train data
+        y_train: Labels for the train data
+        search : Whether to search for the best hyperparameters
     """
 
-    """
-
-    def identity(arg):
-        """ Simple identity function works as a passthrough"""
-        return arg
 
     pipeline = Pipeline([
         # Use ColumnTransformer to combine the features from subject and body
         ('union', ColumnTransformer(
             [
-                # budget column
-                ('budget', StandardScaler(), ['budget', 'client.feedback', 'client.reviews_count']),
+                ('scaler', StandardScaler(), [
+                    'budget',
+                    'client.feedback',
+                    'client.reviews_count',
+                    'client.jobs_posted',
+                    'client.past_hires'
+                ]),
 
-                # title column
                 ('title_vec', Pipeline([
-                    ('preprocessor', NLTKPreprocessor()),
-                    ('tfidf', TfidfVectorizer(tokenizer=identity, preprocessor=None, lowercase=False, use_idf=True)),
+                    ('preprocessor', NLTKPreprocessor()), # tokenization, stop-words, lemmatization
+                    ('tfidf', TfidfVectorizer(
+                        tokenizer=identity,
+                        preprocessor=None,
+                        lowercase=False,
+                        use_idf=True
+                    )),
                 ]), 'title'),
 
-                # snippet column
                 ('snippet_vec', Pipeline([
-                    ('preprocessor', NLTKPreprocessor()),
-                    ('tfidf', TfidfVectorizer(tokenizer=identity, preprocessor=None, lowercase=False, use_idf=True)),
+                    ('preprocessor', NLTKPreprocessor()), # tokenization, stop-words, lemmatization
+                    ('tfidf', TfidfVectorizer(
+                        tokenizer=identity,
+                        preprocessor=None,
+                        lowercase=False,
+                        use_idf=True
+                    )),
                     ('best', TruncatedSVD(n_components=50)),
                 ]), 'snippet'),
                 
-                # 
-                ('ohe_cat', OneHotEncoder(), ["job_type"]),
+                ('cat', ce.CatBoostEncoder(), [
+                    "job_type",
+                    'category2',
+                    'client.country'
+                ]),
             ], remainder='drop'
         )),
 
-        # Classifier
-        ('svc', LinearSVC(dual=False)),
+        ('classifier', svm.SVC(kernel='linear')),
     ], verbose=True)
 
-    model = pipeline.fit(X_train, y_train.values.ravel())
+    if search:
+
+        grid = {
+            'classifier__kernel': ['linear', 'poly', 'rbf', 'sigmoid'],
+        }
+
+        searcher = GridSearchCV(
+            pipeline, 
+            grid, 
+            scoring='f1_weighted',
+            n_jobs=7, 
+            return_train_score=True, 
+            refit=True,
+            verbose=0
+        )
+
+        model = searcher.fit(X_train, y_train.values.ravel())
+    else:
+        model = pipeline.fit(X_train, y_train.values.ravel())
     
     return model
 
@@ -86,20 +141,34 @@ def training_report(model, X_test, y_test):
     return report
 
 
-def predict_unlabeled_jobs(n_jobs=10, window_days=2):
+def predict_unlabeled_jobs(retrain=False, n_jobs=10, window_days=2):
     """
     Args:
         n_jobs      : Number of jobs to return
         window_days : How many days to look back for unlabeled jobs
     """
+    start = time()
+    
+    df = load_database_data()
 
-    X_train, X_test, y_train, y_test = load_data()
+    # Encode the output labels
+    label_encoder = LabelEncoder()
+    label_encoder = label_encoder.fit(df.loc[:, 'label'].values.ravel())
+    df.loc[:, 'label'] = label_encoder.transform(df.loc[:, 'label'].values.ravel())
+
+    X_train, X_test, y_train, y_test = load_data(df)
 
     unlabeled = load_unlabeled_data()
 
-    model = train(X_train, y_train)
+    model_filename = 'model.pkl'
+    if Path(model_filename).exists() and not retrain:
+        print("Loading model...")
+        model = pickle.load(open(model_filename, 'rb'))
+    else:
+        model = train(X_train, y_train)
+        print("Saving model...")
+        pickle.dump(model, open(model_filename, 'wb'))
     report = training_report(model, X_test, y_test)
-    print(report)
 
     now = datetime.now(tz=pytz.timezone('America/Lima'))
     window = timedelta(days=window_days)
@@ -107,12 +176,12 @@ def predict_unlabeled_jobs(n_jobs=10, window_days=2):
     # Filter by date some jobs
     unlabeled = unlabeled.loc[unlabeled['date_created'] >= now - window, :]
 
-    print(unlabeled)
     if unlabeled.shape[0] == 0:
         return []
     
     # Predict a class
     predicted_class = model.predict(unlabeled)
+    predicted_class = label_encoder.inverse_transform(predicted_class)
 
     # Calculate SVM probabilities
     # https://stackoverflow.com/questions/49507066/predict-probabilities-using-svm
@@ -152,7 +221,9 @@ def predict_unlabeled_jobs(n_jobs=10, window_days=2):
                     selected_jobs.append(row)
                     n_collected += 1
 
-    return selected_jobs
+    end = time()
+    print(f"Prediction took {end - start:.1f} seconds.")
+    return selected_jobs, report
 
 
 def load_unlabeled_data():
@@ -161,8 +232,7 @@ def load_unlabeled_data():
     unlabeled.drop(['label'], axis=1, inplace=True)
     return unlabeled
 
-def load_data(labeled=True):
-    df = load_database_data()
+def load_data(df, labeled=True):
     y = df.loc[:, 'label']
     X = df.drop(['label'], axis=1)
 
