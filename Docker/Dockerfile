@@ -9,10 +9,11 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev python-openssl
 
 RUN curl https://pyenv.run | bash
+ENV PATH /root/.pyenv/bin:$PATH
+RUN pyenv init - && \
+    pyenv virtualenv-init - && \
+    pyenv install -v 3.8.6
 
-RUN ~/.pyenv/bin/pyenv init - && \
-    ~/.pyenv/bin/pyenv virtualenv-init - && \
-    ~/.pyenv/bin/pyenv install -v 3.8.6
 
 # # The runtime-stage image; we can use Debian as the base image since the Conda
 # # env also includes Python for us.
@@ -22,8 +23,7 @@ FROM node:12-buster-slim AS runtime
 COPY --from=build /root/.pyenv /root/.pyenv
 
 # Prepare pyenv's Python to be used
-ENV PYENV_ROOT /root/.pyenv
-ENV PATH $PYENV_ROOT/bin:$PATH
+ENV PATH /root/.pyenv/bin:$PATH
 RUN echo 'eval "$(pyenv init -)"' >> /root/.bashrc
 RUN echo 'eval "$(pyenv virtualenv-init -)"' >> /root/.bashrc
 RUN pyenv global 3.8.6
