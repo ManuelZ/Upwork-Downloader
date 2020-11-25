@@ -52,7 +52,8 @@ def get_conn():
 def predict():
     body = request.get_json()
     retrain = True if body.get('retrain') == "true" else False
-    jobs, report = predict_unlabeled_jobs(retrain=retrain)
+    window_days = body.get('window', 2)
+    jobs, report = predict_unlabeled_jobs(retrain=retrain, n_jobs=20, window_days=window_days)
     jobs = [job.to_dict() for job in jobs]
     return jsonify({'msg': jobs, 'report':report.to_string()})
 

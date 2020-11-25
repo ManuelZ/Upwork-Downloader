@@ -7,6 +7,8 @@ ACCESS_TOKEN_FILENAME = '../access_token.secret'
 # Where to save all the downloaded jobs' data
 DATABASE = '../data/jobs_db.sqlite3'
 
+MODEL_FILENAME = 'model.pkl'
+
 TABLE_NAME = 'jobs'
 
 # 'id' must be the first field
@@ -61,7 +63,11 @@ SEARCH_TERMS = [
         'raspberry pi',
         'arduino',
         'supervised learning',
-        'data extraction'
+        'data extraction',
+        "product matching",
+        "ml model",
+        "ml",
+        "ai"
     ]
 
 MAX_ENTRIES_PER_TERM = 20
