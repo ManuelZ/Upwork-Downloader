@@ -23,27 +23,34 @@ FROM node:12-buster-slim AS runtime
 COPY --from=build /root/.pyenv /root/.pyenv
 
 # Prepare pyenv's Python to be used
-ENV PATH /root/.pyenv/bin:$PATH
+ENV PYENV_ROOT /root/.pyenv
+ENV PATH $PYENV_ROOT/bin:$PATH
 RUN echo 'eval "$(pyenv init -)"' >> /root/.bashrc
 RUN echo 'eval "$(pyenv virtualenv-init -)"' >> /root/.bashrc
 RUN pyenv global 3.8.6
-
+ENV PYENV_VERSION  3.8.6
+RUN pyenv versions
+RUN pyenv which python
+ENV VIRTUAL_ENV=/root/.pyenv/versions/3.8.6/
+RUN pyenv virtualenv 3.8.6 myenv
+RUN pyenv activate myenv
+RUN python --version
 
 # User-intercace preparation
 WORKDIR ./upwork-downloader-ui
-COPY ./package.json .
+COPY ./upwork-downloader-ui/package.json .
 RUN npm install
-COPY ./tailwind.config.js .
-COPY ./src ./src
-# COPY ./public ./public
+COPY ./upwork-downloader-ui/tailwind.config.js .
+COPY ./upwork-downloader-ui/src ./src
+COPY ./upwork-downloader-ui/public ./public
 RUN npm run build
 
 
 # Backend preparation
 WORKDIR ./backend
-COPY ./requirements.txt .
+COPY ./backend/requirements.txt .
 RUN python -m pip install --no-cache-dir -r requirements.txt
-COPY ./src ./src
+COPY ./backend/src ./src
 RUN python -c "import nltk; nltk.download('stopwords'); nltk.download('punkt'); nltk.download('averaged_perceptron_tagger'); nltk.download('wordnet')"
 
 CMD [ "python", "src/backend.py" ] 
