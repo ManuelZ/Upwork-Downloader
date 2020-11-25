@@ -4,7 +4,7 @@
 FROM debian:buster-slim AS build
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
-    git make build-essential libssl-dev zlib1g-dev \
+    git make build-essential libssl-dev zlib1g-dev ca-certificates \
     libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev \
     libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev python-openssl
 
