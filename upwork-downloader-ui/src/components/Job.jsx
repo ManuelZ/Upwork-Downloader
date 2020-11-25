@@ -31,13 +31,13 @@ const Job = ({ id, details, handler }) => {
   );
 
   let horizontal_spacer = (
-    <div className="flex justify-center justify-around lg:p-4 lg:w-1/6">
+    <div className="flex justify-around lg:p-4 lg:w-1/6">
       <span className="text-sm"></span>
     </div>
   );
 
   return (
-    <div className="flex flex-col w-full rounded shadow-lg text-left px-1 lg:px-4 mb-5 min-h-50 items-end">
+    <div className="flex flex-col w-full rounded shadow-lg text-left px-1 lg:px-4 mb-6 min-h-50 items-end bg-gray-50">
       <div className="flex flex-row w-full px-6 py-4">
         {horizontal_spacer}
         {jobHeader}

@@ -1,7 +1,7 @@
 # This image should have Python3.8 and Node 12
 # It should first launch the npm run build process and then serve index.html 
 # with Flask
-FROM python:3.8-slim-buster  AS build
+FROM python:3.8-slim-buster AS build
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
     git make build-essential libssl-dev zlib1g-dev \
@@ -16,19 +16,37 @@ RUN ~/.pyenv/bin/pyenv init - && \
 
 # # The runtime-stage image; we can use Debian as the base image since the Conda
 # # env also includes Python for us.
-FROM debian:buster-slim AS runtime
+FROM node:12-buster-slim AS runtime
 
 # Copy /venv from the previous stage:
 COPY --from=build /root/.pyenv /root/.pyenv
 
+# Prepare pyenv's Python to be used
 ENV PYENV_ROOT /root/.pyenv
 ENV PATH $PYENV_ROOT/bin:$PATH
 RUN echo 'eval "$(pyenv init -)"' >> /root/.bashrc
 RUN echo 'eval "$(pyenv virtualenv-init -)"' >> /root/.bashrc
-
 RUN pyenv global 3.8.6
 
-SHELL ["/bin/bash", "-c"]
+
+# User-intercace preparation
+WORKDIR ./upwork-downloader-ui
+COPY ./package.json .
+RUN npm install
+COPY ./tailwind.config.js .
+COPY ./src ./src
+# COPY ./public ./public
+RUN npm run build
+
+
+# Backend preparation
+WORKDIR ./backend
+COPY ./requirements.txt .
+RUN python -m pip install --no-cache-dir -r requirements.txt
+COPY ./src ./src
+RUN python -c "import nltk; nltk.download('stopwords'); nltk.download('punkt'); nltk.download('averaged_perceptron_tagger'); nltk.download('wordnet')"
+
+CMD [ "python", "src/backend.py" ] 
 
 # # Source https://www.scivision.dev/compile-install-python-beta-raspberry-pi/
 # RUN apt-get update && apt-get install --no-install-recommends -y libffi-dev libbz2-dev liblzma-dev libsqlite3-dev libncurses5-dev libgdbm-dev zlib1g-dev libreadline-dev libssl-dev tk-dev build-essential libncursesw5-dev libc6-dev openssl git wget ca-certificates

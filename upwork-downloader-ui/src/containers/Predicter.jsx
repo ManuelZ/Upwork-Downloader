@@ -8,6 +8,7 @@ const Predicter = () => {
   const [fetching, setFetching] = useState(false);
   const [body, setBody] = useState({
     retrain: true,
+    window: 2,
   });
 
   const buttonRef = useRef(null);
@@ -17,7 +18,7 @@ const Predicter = () => {
   const getPredictions = (event) => {
     event.preventDefault();
 
-    const { retrain } = body;
+    const { retrain, window } = body;
 
     if (buttonRef.current) {
       buttonRef.current.setAttribute("disabled", "disabled");
@@ -27,7 +28,7 @@ const Predicter = () => {
 
     fetch(`${ENDPOINT}/predict`, {
       method: "POST",
-      body: JSON.stringify({ retrain: retrain }),
+      body: JSON.stringify({ "retrain": retrain, "window": window }),
       headers: {
         "Content-Type": "application/json",
       },
@@ -73,6 +74,26 @@ const Predicter = () => {
     }
   };
 
+  const handleMinusOne = (event) => {
+    event.preventDefault();
+
+    let newWindow = body.window - 1 < 0 ? 0 : body.window - 1;
+
+    setBody({
+      ...body,
+      window: newWindow,
+    });
+  };
+
+  const handlePlusOne = (event) => {
+    event.preventDefault();
+
+    setBody({
+      ...body,
+      window: body.window + 1,
+    });
+  };
+
   const handleInputChange = (event) => {
     setBody({
       ...body,
@@ -86,7 +107,7 @@ const Predicter = () => {
   } else if (isNull(predicted)) {
     jobs = <div></div>;
   } else if (isEmpty(predicted)) {
-    jobs = <div className="m-5">No jobs to predict</div>;
+    jobs = <div className="m-5">No predicted jobs to display.</div>;
   } else {
     jobs = Object.keys(predicted)
       .map((jobKey) => ({ id: jobKey, ...predicted[jobKey] }))
@@ -107,54 +128,115 @@ const Predicter = () => {
         <div className="my-10 sm:mt-0">
           <div className="md:grid md:grid-cols-1 md:gap-6">
             <div className="mt-5 md:mt-0 md:col-span-1">
-              <form action="#" method="POST">
-                <div className="shadow overflow-hidden sm:rounded-md">
-                  <div className="px-4 py-5 bg-white space-y-6 sm:p-6">
-                    <fieldset>
-                      <div>
+              <form className="flex flex-row" action="#" method="POST">
+                <div className="shadow sm:rounded-md">
+                  <div className="flex flex-row">
+                    <div className="px-4 py-5 bg-white sm:p-6">
+                      <fieldset>
+                        <div>
+                          <legend className="text-base font-medium text-gray-900">
+                            Retrain
+                          </legend>
+                          <p className="text-sm text-gray-500">
+                            Whether to retrain or not the model before
+                            predicting.
+                          </p>
+                        </div>
+                        <div className="mt-4 space-y-4">
+                          <div className="flex items-center">
+                            <input
+                              id="retrain_true"
+                              name="retrain"
+                              type="radio"
+                              className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300"
+                              value={true}
+                              onChange={handleInputChange}
+                            />
+                            <label
+                              htmlFor="retrain_true"
+                              className="ml-3 block text-sm font-medium text-gray-700"
+                            >
+                              True
+                            </label>
+                          </div>
+                          <div className="flex items-center">
+                            <input
+                              defaultChecked
+                              id="retrain_false"
+                              name="retrain"
+                              type="radio"
+                              className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300"
+                              value={false}
+                              onChange={handleInputChange}
+                            />
+                            <label
+                              htmlFor="retrain_false"
+                              className="ml-3 block text-sm font-medium text-gray-700"
+                            >
+                              False
+                            </label>
+                          </div>
+                        </div>
+                      </fieldset>
+                    </div>
+                    <div className="px-4 py-5 bg-white sm:p-6">
+                      <div className="flex flex-col items-center h-10">
                         <legend className="text-base font-medium text-gray-900">
-                          Retrain
+                          Look-back window
                         </legend>
                         <p className="text-sm text-gray-500">
-                          Whether to retrain or not the model before predicting.
+                          How many days to look back for jobs
                         </p>
-                      </div>
-                      <div className="mt-4 space-y-4">
-                        <div className="flex items-center">
-                          <input
-                            id="retrain_true"
-                            name="retrain"
-                            type="radio"
-                            className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300"
-                            value={true}
-                            onChange={handleInputChange}
-                          />
-                          <label
-                            htmlFor="retrain_true"
-                            className="ml-3 block text-sm font-medium text-gray-700"
+                        <div className="flex flex-row h-10 rounded-lg bg-transparent mt-5">
+                          <button
+                            onClick={handleMinusOne}
+                            className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
                           >
-                            True
-                          </label>
-                        </div>
-                        <div className="flex items-center">
+                            <span className="sr-only">Previous</span>
+                            <svg
+                              className="h-5 w-5"
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                              aria-hidden="true"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          </button>
                           <input
-                            defaultChecked 
-                            id="retrain_false"
-                            name="retrain"
-                            type="radio"
-                            className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300"
-                            value={false}
-                            onChange={handleInputChange}
+                            type="number"
+                            className="no-arrows text-center w-16 text-md bg-gray-300 text-gray-700 font-semibold  hover:text-black focus:text-black "
+                            name="custom-input-number"
+                            onChange={() => {}}
+                            value={body.window}
                           />
-                          <label
-                            htmlFor="retrain_false"
-                            className="ml-3 block text-sm font-medium text-gray-700"
+
+                          <button
+                            onClick={handlePlusOne}
+                            className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
                           >
-                            False
-                          </label>
+                            <span className="sr-only">Next</span>
+                            <svg
+                              className="h-5 w-5"
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                              aria-hidden="true"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          </button>
                         </div>
                       </div>
-                    </fieldset>
+                    </div>
                   </div>
                   <div className="px-4 py-3 bg-gray-50 text-right sm:px-6">
                     <button
@@ -174,7 +256,9 @@ const Predicter = () => {
             </div>
           </div>
         </div>
+        <div>
         {jobs}
+        </div>
       </div>
     </>
   );
