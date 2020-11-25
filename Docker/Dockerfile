@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 RUN curl https://pyenv.run | bash
 ENV PYENV_ROOT /root/.pyenv
 ENV PATH $PYENV_ROOT/bin:$PATH
+RUN ls -a /home/
 RUN pyenv
 RUN pyenv install -v 3.8.6
 RUN echo 'eval "$(pyenv init -)"' >> /root/.bashrc
