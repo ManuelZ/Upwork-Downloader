@@ -20,7 +20,7 @@ RUN echo 'eval "$(pyenv virtualenv-init -)"' >> /root/.bashrc
 ENV PATH $PYENV_ROOT/versions/3.8.6/bin:$PATH
 RUN apt-get update && \
     apt-get install --no-install-recommends -y \
-    libssl1.1 build-essential libatlas-base-dev liblapack-dev libopenblas-dev gfortran
+    libssl1.1 build-essential libatlas-base-dev liblapack-dev libopenblas-dev gfortran gcc
 RUN pyenv virtualenv 3.8.6 myenv
 RUN python -m pip install --upgrade pip setuptools wheel
 RUN python -m pip install numpy pandas scikit-learn scipy
