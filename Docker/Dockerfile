@@ -3,22 +3,32 @@
 # with Flask
 FROM debian:buster-slim AS build
 
-RUN apt-get update && apt-get install --no-install-recommends -y \
+RUN apt-get update && \
+    apt-get install --no-install-recommends -y \
     git make build-essential libssl-dev zlib1g-dev ca-certificates \
-    libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev \
-    libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev python-openssl
+    libbz2-dev libreadline-dev libsqlite3-dev curl llvm libncurses5-dev \
+    libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev
 
 RUN curl https://pyenv.run | bash
 ENV PYENV_ROOT /root/.pyenv
 ENV PATH $PYENV_ROOT/bin:$PATH
-RUN ls -a /home/
-RUN pyenv
 RUN pyenv install -v 3.8.6
 RUN echo 'eval "$(pyenv init -)"' >> /root/.bashrc
 RUN echo 'eval "$(pyenv virtualenv-init -)"' >> /root/.bashrc
 
-# # The runtime-stage image; we can use Debian as the base image since the Conda
-# # env also includes Python for us.
+# pip builds
+ENV PATH $PYENV_ROOT/versions/3.8.6/bin:$PATH
+RUN apt-get update && \
+    apt-get install --no-install-recommends -y \
+    libssl1.1 build-essential libatlas-base-dev liblapack-dev libopenblas-dev gfortran
+RUN pyenv virtualenv 3.8.6 myenv
+RUN python -m pip install --upgrade pip setuptools wheel
+RUN python -m pip install numpy pandas scikit-learn scipy
+
+
+
+# The runtime-stage image; we can use Debian as the base image since the Conda
+# env also includes Python for us.
 FROM node:12-buster-slim AS runtime
 
 # Copy /venv from the previous stage:
@@ -29,9 +39,7 @@ COPY --from=build /root/.bashrc /root/.bashrc
 ENV PYENV_ROOT /root/.pyenv
 ENV PATH $PYENV_ROOT/bin:$PATH
 ENV PYENV_VERSION 3.8.6
-ENV PATH $PYENV_ROOT/versions/3.8.6/bin:$PATH 
-# RUN pyenv virtualenv 3.8.6 myenv
-RUN python --version
+ENV PATH $PYENV_ROOT/versions/3.8.6/bin:$PATH
 
 
 # User-intercace preparation
@@ -43,16 +51,16 @@ COPY ./upwork-downloader-ui/src ./src
 RUN npm install
 RUN npm run build
 
+# To make requests to possible https endpoints work
+RUN apt-get update && apt-get install --no-install-recommends -y libssl1.1
 
 # Backend preparation
 WORKDIR ./backend
 COPY ./backend/requirements.txt .
-RUN python -m pip --version
 RUN python -m pip install --no-cache-dir -r requirements.txt
-#COPY ./backend/src ./src
-#RUN python -c "import nltk; nltk.download('stopwords'); nltk.download('punkt'); nltk.download('averaged_perceptron_tagger'); nltk.download('wordnet')"
-
-#CMD [ "python", "src/backend.py" ] 
+COPY ./backend/src ./src
+RUN python -c "import nltk; nltk.download('stopwords'); nltk.download('punkt'); nltk.download('averaged_perceptron_tagger'); nltk.download('wordnet')"
+CMD [ "python", "src/backend.py" ] 
 
 # # Source https://www.scivision.dev/compile-install-python-beta-raspberry-pi/
 # RUN apt-get update && apt-get install --no-install-recommends -y libffi-dev libbz2-dev liblzma-dev libsqlite3-dev libncurses5-dev libgdbm-dev zlib1g-dev libreadline-dev libssl-dev tk-dev build-essential libncursesw5-dev libc6-dev openssl git wget ca-certificates
