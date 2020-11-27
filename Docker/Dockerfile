@@ -5,12 +5,17 @@ FROM debian:buster-slim AS build
 
 RUN apt-get update && \
     apt-get install --no-install-recommends -y \
-    git make build-essential libssl-dev zlib1g-dev ca-certificates \
-    libbz2-dev libreadline-dev libsqlite3-dev curl llvm libncurses5-dev \
-    libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev
+    git gcc build-essential libssl1.1 libssl-dev zlib1g-dev ca-certificates \
+    libbz2-dev libreadline-dev libsqlite3-dev llvm libncurses5-dev \
+    libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev curl wget
 
-RUN curl https://pyenv.run | bash
+# Notice: weird problem with curl and TLS certificates.
+# I need to manually update the cacert certificates using wget to let the 
+# pyenv.run script (that uses curl) work.
+ENV CURL_CA_BUNDLE /root/cacert.pem
+RUN wget https://curl.haxx.se/ca/cacert.pem -O $CURL_CA_BUNDLE
 ENV PYENV_ROOT /root/.pyenv
+RUN curl https://pyenv.run | bash
 ENV PATH $PYENV_ROOT/bin:$PATH
 RUN pyenv install -v 3.8.6
 RUN echo 'eval "$(pyenv init -)"' >> /root/.bashrc
@@ -20,7 +25,7 @@ RUN echo 'eval "$(pyenv virtualenv-init -)"' >> /root/.bashrc
 ENV PATH $PYENV_ROOT/versions/3.8.6/bin:$PATH
 RUN apt-get update && \
     apt-get install --no-install-recommends -y \
-    libssl1.1 build-essential libatlas-base-dev liblapack-dev libopenblas-dev gfortran gcc
+    libatlas-base-dev liblapack-dev libopenblas-dev gfortran 
 RUN pyenv virtualenv 3.8.6 myenv
 RUN python -m pip install --upgrade pip setuptools wheel
 RUN python -m pip install numpy pandas scikit-learn scipy
