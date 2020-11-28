@@ -256,7 +256,7 @@ const Predicter = () => {
             </div>
           </div>
         </div>
-        <div>
+        <div className="w-full">
         {jobs}
         </div>
       </div>
