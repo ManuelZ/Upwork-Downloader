@@ -12,3 +12,5 @@ ids.txt
 tailwind.css
 
 *SQLiteDatabaseBrowserPortable/*
+
+*.pkl

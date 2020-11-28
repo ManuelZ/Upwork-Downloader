@@ -10,26 +10,24 @@ import pickle
 import pytz
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import GridSearchCV
-from sklearn.pipeline import Pipeline
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import classification_report
-from sklearn.decomposition import TruncatedSVD
-from sklearn.preprocessing import LabelEncoder
-from sklearn.metrics import recall_score
-from sklearn.metrics import make_scorer
 from sklearn import svm
 import category_encoders as ce
+from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import LabelEncoder
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.decomposition import TruncatedSVD
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import StratifiedKFold
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.metrics import classification_report
+from sklearn.metrics import recall_score, precision_score
+from sklearn.metrics import make_scorer
 
 # Local imports
 from src.config import TIMESTAMP_FORMAT
-from src.preprocessors import NLTKPreprocessor
-from src.preprocessors import StemmedCountVectorizer
+from src.preprocessors import SpacyPreprocessor
 from src.utils import load_database_data
 from src.config import MODEL_FILENAME
 
@@ -68,10 +66,10 @@ def train(X_train, y_train, search=True):
     """
 
     classifier = svm.SVC(
-        C                       = 1.8,
+        C                       = 1.4,
         kernel                  = 'linear', 
-        decision_function_shape = "ovr",
-        class_weight            = "balanced"
+        decision_function_shape = 'ovr',
+        class_weight            = 'balanced'
     )
 
     pipeline = Pipeline([
@@ -87,25 +85,28 @@ def train(X_train, y_train, search=True):
                 ]),
 
                 ('title_vec', Pipeline([
-                    ('preprocessor', NLTKPreprocessor()), # tokenization, stop-words, lemmatization
-                    ('tfidf', TfidfVectorizer(
-                        tokenizer    = identity,
-                        preprocessor = None,
-                        lowercase    = False,
-                        use_idf      = True
-                    )),
-                ]), 'title'),
-
-                ('snippet_vec', Pipeline([
-                    ('preprocessor', NLTKPreprocessor()), # tokenization, stop-words, lemmatization
+                    ('preprocessor', SpacyPreprocessor()), # tokenization, stop-words, lemmatization
                     ('tfidf', TfidfVectorizer(
                         tokenizer    = identity,
                         preprocessor = None,
                         lowercase    = False,
                         use_idf      = True,
-                        sublinear_tf = False # not good results when True
+                        ngram_range  = (1,2)
                     )),
-                    ('best', TruncatedSVD(n_components=50)),
+                    ('svd', TruncatedSVD(n_components=150)),
+                ]), 'title'),
+
+                ('snippet_vec', Pipeline([
+                    ('preprocessor', SpacyPreprocessor()), # tokenization, stop-words, lemmatization
+                    ('tfidf', TfidfVectorizer(
+                        tokenizer    = identity,
+                        preprocessor = None,
+                        lowercase    = False,
+                        use_idf      = True,
+                        sublinear_tf = False, # not good results when True
+                        ngram_range  = (1,2)
+                    )),
+                    ('svd', TruncatedSVD(n_components=100)),
                 ]), 'snippet'),
                 
                 ('cat', ce.CatBoostEncoder(), [
@@ -123,13 +124,14 @@ def train(X_train, y_train, search=True):
 
         log_space = gen_parameters_from_log_space(
             low_value  = 0.5,
-            high_value = 4,
+            high_value = 5,
             n_samples  = 10
         )
 
         grid = {
-            'classifier__C' : log_space,
-            # 'classifier__class_weight' : ['balanced', None]
+            # 'union__snippet_vec__svd__n_components' : np.arange(50, 301, 50),
+            # 'union__title_vec__svd__n_components' : np.arange(100, 301, 50),
+            # 'classifier__C' : log_space,
             # 'classifier__kernel': [
             #     'linear',
             #     'poly',
@@ -148,7 +150,7 @@ def train(X_train, y_train, search=True):
         # average='macro'.
         # Also see: https://stackoverflow.com/a/62471736/1253729
         scorer = make_scorer(
-            score_func  = recall_score,
+            score_func  = precision_score,
             average     = "macro" 
         )
 
@@ -159,7 +161,7 @@ def train(X_train, y_train, search=True):
             return_train_score = True, 
             refit              = True,
             verbose            = 1,
-            cv                 = StratifiedKFold(),
+            cv                 = StratifiedKFold(n_splits=3),
             scoring            = scorer,
         )
 
@@ -173,16 +175,19 @@ def train(X_train, y_train, search=True):
     return model
 
 
-def training_report(model, X_test, y_test, label_encoder):
+def training_report(model, X_train, y_train, X_test, y_test, le):
     """
     """
+
+    train_score = model.score(X_train, y_train)
+    print(f"Train score: {train_score:.2f}")
     
-    score = model.score(X_test, y_test)
-    print(f"Score: {score:.2f}")
+    test_score = model.score(X_test, y_test)
+    print(f"Test score: {test_score:.2f}")
 
     y_pred = model.predict(X_test)
-    y_pred = label_encoder.inverse_transform(y_pred)
-    y_test = label_encoder.inverse_transform(y_test)
+    y_pred = le.inverse_transform(y_pred)
+    y_test = le.inverse_transform(y_test)
     report = classification_report(y_test, y_pred, output_dict=True)
     report = pd.DataFrame(report).round(2).T
 
@@ -200,10 +205,11 @@ def predict_unlabeled_jobs(retrain=False, n_jobs=10, window_days=2):
     df = load_database_data()
 
     # Encode the output labels
-    label_encoder = LabelEncoder()
-    label_encoder = label_encoder.fit(df.loc[:, 'label'].values.ravel())
-    df.loc[:, 'label'] = label_encoder.transform(df.loc[:, 'label'].values.ravel())
+    le = LabelEncoder()
+    le = le.fit(df.loc[:, 'label'].values.ravel())
+    df.loc[:, 'label'] = le.transform(df.loc[:, 'label'].values.ravel())
 
+    # TODO: load unlabeled data only if retrain=False
     X_train, X_test, y_train, y_test = load_data(df)
 
     unlabeled = load_unlabeled_data()
@@ -223,7 +229,7 @@ def predict_unlabeled_jobs(retrain=False, n_jobs=10, window_days=2):
         print("Model saved.")
     
     print("Creating performance report...")
-    report = training_report(model, X_test, y_test, label_encoder)
+    report = training_report(model, X_train, y_train, X_test, y_test, le)
     print("Report created.")
 
     now = datetime.now(tz=pytz.timezone('America/Lima'))
@@ -237,16 +243,52 @@ def predict_unlabeled_jobs(retrain=False, n_jobs=10, window_days=2):
     
     # Predict a class
     predicted_class = model.predict(unlabeled)
-    predicted_class = label_encoder.inverse_transform(predicted_class)
+    predicted_class = le.inverse_transform(predicted_class)
 
-    # Calculate SVM probabilities
-    # https://stackoverflow.com/questions/49507066/predict-probabilities-using-svm
-    p = np.array(model.decision_function(unlabeled)) # decision is a voting function
-    probs = np.exp(p) / np.sum(np.exp(p), axis=1).reshape(-1,1) # softmax after the voting
+    # Calculate SVM probabilities?
+    #
+    # After researching, it looks like there is no simple way of obtaining 
+    # probabilities out of SVM because it's not a probabilistic model, as 
+    # mentioned in [1], which is a post linked by the documentation of 
+    # `decision_function` in [2].
+    # Similarly, in [3, p.4] is said that the mapping from decision functions 
+    # to probabilities via softmax "is not very well founded, as the scaled 
+    # values are not justified fro the data".
+    # 
+    # The following comes from the documentation:
+    # The decision_function method of SVC gives per-class scores for each 
+    # sample.
+    # - If decision_function_shape=’ovo’, the function values are proportional 
+    #   to the distance of the samples X to the separating hyperplane. If the 
+    #   exact distances are required, divide the function values by the norm of
+    #   the weight vector (coef_). 
+    # - If decision_function_shape=’ovr’, the decision function is a monotonic 
+    #   transformation of ovo decision function.
+    #
+    # [1] https://stats.stackexchange.com/a/14881/55820
+    # [2] https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html#sklearn.svm.SVC.decision_function
+    # [3] https://www.econstor.eu/bitstream/10419/22569/1/tr56-04.pdf
+    dist_to_hyperplanes = np.array(model.decision_function(unlabeled))
+    pseudo_probs = np.exp(dist_to_hyperplanes) / np.sum(np.exp(dist_to_hyperplanes), axis=1).reshape(-1,1) # softmax after the voting
+
+    # Weights assigned to the features (coefficients in the primal problem)
+    # weights = model.best_estimator_.named_steps['classifier'].coef_
     
+    print(f"Predicted class: {predicted_class}")
+    print(f"Distances to hyperplanes: {dist_to_hyperplanes}")
+    print(f"My pseudo-probability: {pseudo_probs}")
+    
+    assignments = {
+        "predicted"    : predicted_class,
+        "score"        : pseudo_probs.max(axis=1),
+        le.classes_[0] : pseudo_probs[:,0], # e.g. "Good" or "Bad" or "Maybe"
+        le.classes_[1] : pseudo_probs[:,1],
+        le.classes_[2] : pseudo_probs[:,2]
+    }
+
     # Add columns with new information
-    unlabeled = unlabeled.assign(predicted=predicted_class, probability=probs.max(axis=1))
-    unlabeled.sort_values(by=['probability'], inplace=True, ascending=False)
+    unlabeled = unlabeled.assign(**assignments)
+    unlabeled.sort_values(by=['score'], inplace=True, ascending=False)
 
     unlabeled_good  = unlabeled.loc[unlabeled.predicted == "Good", :].copy()
     unlabeled_maybe = unlabeled.loc[unlabeled.predicted == "Maybe", :].copy()
@@ -272,7 +314,7 @@ def predict_unlabeled_jobs(retrain=False, n_jobs=10, window_days=2):
                 n_collected += 1
             
             elif type_df == "Bad":
-                if row["probability"] < 0.3:
+                if row["score"] < 0.3:
                     selected_jobs.append(row)
                     n_collected += 1
 

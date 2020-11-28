@@ -12,15 +12,15 @@ const LabelSelector = ({ id, clickHandler, selectedOption }) => {
 
   // https://blog.bitsrc.io/customise-radio-buttons-without-compromising-accessibility-b03061b5ba93
   return (
-    <div className="flex flex-row lg:flex-col py-3 lg:py-0 lg:w-1/6 items-left justify-between lg:justify-around">
-      <div>
+    <div className="flex flex-row lg:flex-col py-3 lg:py-0 lg:w-1/6 items-start justify-between lg:justify-around">
+      <>
         <input
           id={`class1-${id}`}
           type="radio"
           name={`classes-${id}`}
           value={class1Value}
           defaultChecked={selectedOption === class1Value}
-          onClick={changeEvent => {
+          onClick={(changeEvent) => {
             clickHandler(changeEvent);
           }}
           className="opacity-0 absolute"
@@ -35,16 +35,17 @@ const LabelSelector = ({ id, clickHandler, selectedOption }) => {
         >
           <span>{class1Value}</span>
         </label>
-      </div>
+      </>
+      
 
-      <div>
+      <>
         <input
           id={`class2-${id}`}
           type="radio"
           name={`classes-${id}`}
           value={class2Value}
           defaultChecked={selectedOption === class2Value}
-          onClick={changeEvent => {
+          onClick={(changeEvent) => {
             clickHandler(changeEvent);
           }}
           className="opacity-0 absolute"
@@ -59,16 +60,16 @@ const LabelSelector = ({ id, clickHandler, selectedOption }) => {
         >
           <span>{class2Value}</span>
         </label>
-      </div>
+      </>
 
-      <div>
+      <>
         <input
           id={`class3-${id}`}
           type="radio"
           name={`classes-${id}`}
           value={class3Value}
           defaultChecked={selectedOption === class3Value}
-          onClick={changeEvent => {
+          onClick={(changeEvent) => {
             clickHandler(changeEvent);
           }}
           className="opacity-0 absolute"
@@ -83,7 +84,7 @@ const LabelSelector = ({ id, clickHandler, selectedOption }) => {
         >
           <span>{class3Value}</span>
         </label>
-      </div>
+      </>
     </div>
   );
 };

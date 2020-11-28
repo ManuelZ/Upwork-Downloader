@@ -29,11 +29,8 @@ RUN apt-get update && \
 RUN pyenv virtualenv 3.8.6 myenv
 RUN python -m pip install --upgrade pip setuptools wheel
 RUN python -m pip install numpy pandas scikit-learn scipy
-RUN python -m pip install nltk
 COPY ./backend/requirements.txt .
 RUN python -m pip install --no-cache-dir -r requirements.txt
-RUN python -c "import nltk; nltk.download('stopwords'); nltk.download('punkt'); nltk.download('averaged_perceptron_tagger'); nltk.download('wordnet')"
-
 
 
 # The runtime-stage image; we can use Debian as the base image since the Conda
@@ -43,7 +40,6 @@ FROM node:12-buster-slim AS runtime
 # Copy /venv from the previous stage:
 COPY --from=build /root/.pyenv /root/.pyenv
 COPY --from=build /root/.bashrc /root/.bashrc
-COPY --from=build /root/nltk_data /root/nltk_data
 
 # To make requests to possible https endpoints work
 RUN apt-get update && apt-get install --no-install-recommends -y libssl1.1 ca-certificates

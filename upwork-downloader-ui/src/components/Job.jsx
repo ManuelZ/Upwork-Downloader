@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import LabelSelector from "./LabelSelector";
 import Moment from "react-moment";
 import Truncate from "react-truncate";
+import ScoreDisplay from "./ScoreDisplay";
 
 const Job = ({ id, details, handler }) => {
   const [truncated, setTruncated] = useState(true);
@@ -12,41 +13,53 @@ const Job = ({ id, details, handler }) => {
     setTruncated(isTruncated);
   };
 
-  const toggleLines = React.useCallback((event) => {
-    event.preventDefault();
-    setTruncated(!truncated);
-    setFirstRender(false);
-  }, [truncated, setTruncated]);
+  const toggleLines = React.useCallback(
+    (event) => {
+      event.preventDefault();
+      setTruncated(!truncated);
+      setFirstRender(false);
+    },
+    [truncated, setTruncated]
+  );
+
+  const { Good, Maybe, Bad } = details;
 
   let jobHeader = (
-    <div className="flex flex-col w-full lg:w-5/6 pb-2 border-b">
-      <div className="font-bold text-xl mb-2 ">
-        <span className="text-justify">
-          <a
-            href={`https://www.upwork.com/jobs/${id}`}
-            target="_blank"
-            rel="noreferrer"
-          >
-            {details.title}
-          </a>
-        </span>
-      </div>
+    <>
+      <ScoreDisplay
+        Good={toPercentage(Good)}
+        Maybe={toPercentage(Maybe)}
+        Bad={toPercentage(Bad)}
+      />
+      <div className="flex flex-col w-full lg:w-5/6 pb-2 border-b  justify-between">
+        <div className="font-bold text-xl mb-2 ">
+          <span className="text-justify">
+            <a
+              href={`https://www.upwork.com/jobs/${id}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {details.title}
+            </a>
+          </span>
+        </div>
 
-      <div className="flex flex-row justify-between mt-1">
-        <div className="text-sm">
-          {details.job_type}
-          {`${details.job_type === "Fixed" ? ` - $${details.budget}` : ""}`}
-        </div>
-        <div className="text-sm text-gray-600 text-right">
-          <Moment fromNow>{details.date_created}</Moment>
+        <div className="flex flex-row justify-between mt-1">
+          <div className="text-sm">
+            {details.job_type}
+            {`${details.job_type === "Fixed" ? ` - $${details.budget}` : ""}`}
+          </div>
+          <div className="text-sm text-gray-600 text-right">
+            <Moment fromNow>{details.date_created}</Moment>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 
   return (
     <div className="flex flex-col w-full rounded shadow-lg text-left py-2 px-1 lg:px-4 mb-6 lg:min-h-50 items-end bg-gray-50">
-      <div className="flex flex-row w-full px-6 py-4 justify-between lg:justify-end">
+      <div className="flex flex-row w-full px-4 py-4 justify-between lg:justify-end">
         {jobHeader}
       </div>
       <div className="flex flex-col lg:flex-row flex-grow w-full px-4 pb-4">
@@ -62,13 +75,12 @@ const Job = ({ id, details, handler }) => {
             ellipsis={
               <span>
                 ...{" "}
-                <a
-                  className="text-indigo-700 font-semibold hover:underline"
-                  href="#"
+                <button
+                  className="bg-transparent border-none cursor-pointer text-indigo-700 font-semibold hover:shadow-none hover:underline"
                   onClick={toggleLines}
                 >
                   Show more
-                </a>
+                </button>
               </span>
             }
             onTruncate={handleTruncate}
@@ -77,14 +89,13 @@ const Job = ({ id, details, handler }) => {
           </Truncate>
           {!truncated && !firstRender && (
             <span>
-              <a
-                className="text-indigo-700 font-semibold hover:underline"
-                href="#"
+              <button
+                className="bg-transparent border-none cursor-pointer text-indigo-700 font-semibold hover:shadow-none hover:underline"
                 onClick={toggleLines}
               >
                 {" "}
                 Show less
-              </a>
+              </button>
             </span>
           )}
         </div>
@@ -95,6 +106,10 @@ const Job = ({ id, details, handler }) => {
 
 function areEqual(prevProps, nextProps) {
   return prevProps.details.label === nextProps.details.label;
+}
+
+function toPercentage(num) {
+  return (100 * Math.round(num * 100)) / 100;
 }
 
 export default React.memo(Job, areEqual);

@@ -1,15 +1,29 @@
 import config from "../config";
-import moment from 'moment';
+import moment from "moment";
 
 export const sortByDate = (a, b) => {
-
-  if (moment(a.date_created).isBefore(b.date_created)) {
+  if (a.predicted === b.predicted) {
+    if (moment(a.date_created).isBefore(b.date_created)) {
+      return 1;
+    }
+    if (moment(a.date_created).isAfter(b.date_created)) {
+      return -1;
+    }
+  } else if ((a.predicted === "Good") & (b.predicted === "Bad")) {
+    return -1;
+  } else if ((a.predicted === "Good") & (b.predicted === "Maybe")) {
+    return -1;
+  } else if ((a.predicted === "Maybe") & (b.predicted === "Good")) {
+    return 1;
+  } else if ((a.predicted === "Maybe") & (b.predicted === "Bad")) {
+    return -1;
+  } else if ((a.predicted === "Maybe") & (b.predicted === "Bad")) {
+    return -1;
+  } else if ((a.predicted === "Bad") & (b.predicted === "Good")) {
+    return 1;
+  } else if ((a.predicted === "Bad") & (b.predicted === "Maybe")) {
     return 1;
   }
-  if (moment(a.date_created).isAfter(b.date_created)) {
-    return -1;
-  }
-  return 0;
 };
 
 export const get_endpoint = () => {

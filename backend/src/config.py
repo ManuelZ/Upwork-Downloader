@@ -63,11 +63,15 @@ SEARCH_TERMS = [
         'raspberry pi',
         'arduino',
         'supervised learning',
-        'data extraction',
         "product matching",
         "ml model",
         "ml",
-        "ai"
+        "ai",
+        "segmentation",
+        "path",
+        "reinforcement learning",
+        "data science",
+        "aws batch"
     ]
 
 MAX_ENTRIES_PER_TERM = 20
