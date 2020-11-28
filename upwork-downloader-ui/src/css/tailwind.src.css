@@ -2,15 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
-.min-h-50 {
-  min-height: 50vh;
-}
-
 @layer utilities {
-  .no-arrows {
-      -webkit-appearance: none; 
-      margin: 0; 
-      -moz-appearance:textfield;
+  @variants responsive {
+    .min-h-50 {
+      min-height: 50vh;
+    }
+    .no-arrows {
+      -webkit-appearance: none;
+      margin: 0;
+      -moz-appearance: textfield;
+    }
   }
-  
 }
