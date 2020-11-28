@@ -60,16 +60,14 @@ ENV PATH $PYENV_ROOT/versions/3.8.6/bin:$PATH
 WORKDIR ./upwork-downloader-ui
 COPY ./upwork-downloader-ui/package.json .
 COPY ./upwork-downloader-ui/tailwind.config.js .
-COPY ./upwork-downloader-ui/build ./build
-# COPY ./upwork-downloader-ui/public ./public
 COPY ./upwork-downloader-ui/src ./src
+COPY ./upwork-downloader-ui/public ./public
 RUN npm install
 RUN npm run build
 
 # Backend preparation
-WORKDIR ./backend
+WORKDIR /backend
 COPY ./backend/src ./src
 ENV PYTHONPATH=/backend:$PYTHONPATH
-
 CMD [ "python", "src/backend.py" ] 
 
