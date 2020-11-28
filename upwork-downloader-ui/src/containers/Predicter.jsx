@@ -103,6 +103,7 @@ const Predicter = () => {
 
   let jobs;
   if (fetching) {
+    
     jobs = <div className="m-5 text-gray-700">Loading predictions...</div>;
   } else if (isNull(predicted)) {
     jobs = <div></div>;
@@ -123,11 +124,10 @@ const Predicter = () => {
   }
 
   return (
-    <>
-      <div className="flex flex-col m-5 justify-center container mx-auto text-center p-4 items-center">
-        <div className="my-10 sm:mt-0">
+      <div className="flex flex-col m-1 lg:m-3 p-2 lg:p-4 justify-center text-center items-center">
+        <div className="lg:mb-10 sm:mt-0">
           <div className="md:grid md:grid-cols-1 md:gap-6">
-            <div className="mt-5 md:mt-0 md:col-span-1">
+            <div className="lg:mt-5 md:mt-0 md:col-span-1">
               <form className="flex flex-row" action="#" method="POST">
                 <div className="shadow sm:rounded-md">
                   <div className="flex flex-row">
@@ -139,7 +139,7 @@ const Predicter = () => {
                           </legend>
                           <p className="text-sm text-gray-500">
                             Whether to retrain or not the model before
-                            predicting.
+                            predicting
                           </p>
                         </div>
                         <div className="mt-4 space-y-4">
@@ -260,7 +260,6 @@ const Predicter = () => {
         {jobs}
         </div>
       </div>
-    </>
   );
 };
 

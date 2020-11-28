@@ -1,21 +1,42 @@
-import React from "react";
+import React, { useState } from "react";
 import LabelSelector from "./LabelSelector";
 import Moment from "react-moment";
 import { CopyToClipboard } from "react-copy-to-clipboard";
 import { FaRegCopy } from "react-icons/fa";
+import Truncate from "react-truncate";
 
 const Job = ({ id, details, handler }) => {
+  const [truncated, setTruncated] = useState(true);
+  const [firstRender, setFirstRender] = useState(true);
+
+  /* Gets called by the Truncate component when it is indeed, truncated */
+  const handleTruncate = (isTruncated) => {
+    setTruncated(isTruncated);
+  };
+
+  const toggleLines = React.useCallback((event) => {
+    event.preventDefault();
+    setTruncated(!truncated);
+    setFirstRender(false);
+  }, [truncated, setTruncated]);
+
   let jobHeader = (
-    <div className="flex flex-col lg:w-5/6 pb-2 border-b">
-      <div className="flex flex-row justify-between">
-        <div className="font-bold text-xl mb-2 ">
-          <span className="text-justify">{details.title}</span>
-          <CopyToClipboard text={`https://www.upwork.com/jobs/${id}`}>
-            <button className="ml-4">
-              <FaRegCopy size="0.8em" />
-            </button>
-          </CopyToClipboard>
-        </div>
+    <div className="flex flex-col w-full lg:w-5/6 pb-2 border-b">
+      <div className="font-bold text-xl mb-2 ">
+        <span className="text-justify">
+          <a
+            href={`https://www.upwork.com/jobs/${id}`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            {details.title}
+          </a>
+        </span>
+        <CopyToClipboard text={`https://www.upwork.com/jobs/${id}`}>
+          <button className="ml-4">
+            <FaRegCopy size="0.8em" />
+          </button>
+        </CopyToClipboard>
       </div>
 
       <div className="flex flex-row justify-between mt-1">
@@ -30,27 +51,49 @@ const Job = ({ id, details, handler }) => {
     </div>
   );
 
-  let horizontal_spacer = (
-    <div className="flex justify-around lg:p-4 lg:w-1/6">
-      <span className="text-sm"></span>
-    </div>
-  );
-
   return (
-    <div className="flex flex-col w-full rounded shadow-lg text-left px-1 lg:px-4 mb-6 min-h-50 items-end bg-gray-50">
-      <div className="flex flex-row w-full px-6 py-4">
-        {horizontal_spacer}
+    <div className="flex flex-col w-full rounded shadow-lg text-left py-2 px-1 lg:px-4 mb-6 min-h-50 items-end bg-gray-50">
+      <div className="flex flex-row w-full px-6 py-4 justify-between lg:justify-end">
         {jobHeader}
       </div>
-      <div className="flex flex-col lg:flex-row flex-grow w-full p-4">
+      <div className="flex flex-col lg:flex-row flex-grow w-full px-4 pb-4">
         <LabelSelector
           id={id}
           clickHandler={handler}
           selectedOption={details.label || details.predicted}
         />
 
-        <div className="lg:w-5/6 py-8 lg:py-4 break-words whitespace-pre-line text-justify">
-          {details.snippet}
+        <div className="lg:w-5/6 pt-8 pb-2 lg:py-4 break-words whitespace-pre-line text-justify">
+          <Truncate
+            lines={truncated && 5}
+            ellipsis={
+              <span>
+                ...{" "}
+                <a
+                  className="text-indigo-700 font-semibold hover:underline"
+                  href="#"
+                  onClick={toggleLines}
+                >
+                  Show more
+                </a>
+              </span>
+            }
+            onTruncate={handleTruncate}
+          >
+            {details.snippet}
+          </Truncate>
+          {!truncated && !firstRender && (
+            <span>
+              <a
+                className="text-indigo-700 font-semibold hover:underline"
+                href="#"
+                onClick={toggleLines}
+              >
+                {" "}
+                Show less
+              </a>
+            </span>
+          )}
         </div>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import React from "react";
 import { get_endpoint } from "../utils/utils";
+import Button from "../components/Button";
 
 const Reader = ({ handleResults, activeFilter }) => {
   let data = null;
@@ -23,14 +24,16 @@ const Reader = ({ handleResults, activeFilter }) => {
   };
 
   return (
-    <div className="border-b flex flex-col justify-between items-center pb-1">
+    <div className="flex flex-col justify-between items-center pb-1">
       <div className="flex flex-col items-start py-3">
-        <button
-          onClick={query_jobs}
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-        >
-          Load saved jobs
-        </button>
+
+      <Button
+              onClick={query_jobs}
+              disabled={null}
+              buttonRef={null}
+              text="Load saved jobs"
+            />
+        
       </div>
     </div>
   );

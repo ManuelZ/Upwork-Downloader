@@ -127,7 +127,6 @@ const ManualClassifier = () => {
     fetch(`${ENDPOINT}/download`, { method: "POST" })
       .then((response) => response.json())
       .then((content) => {
-        console.log("Done fetching new jobs");
         setFetching(false);
         buttonRef.current.removeAttribute("disabled");
       });
@@ -154,7 +153,7 @@ const ManualClassifier = () => {
   return (
     <>
       <JobsCount />
-      <div className="flex flex-row justify-between px-4 container mx-auto">
+      <div className="flex flex-row justify-between px-4 border-b">
         <div className="flex w-1/6 items-center justify-center">
           <div>
             <Button
@@ -172,9 +171,7 @@ const ManualClassifier = () => {
         <div className="flex w-1/6"></div>
       </div>
 
-      <div className="flex flex-col m-2 lg:m-5 p-0 lg:p-4 justify-center mx-auto text-center items-center">
-        {content}
-      </div>
+      <div className="flex flex-col m-2 lg:m-5 p-0 lg:p-4">{content}</div>
     </>
   );
 };

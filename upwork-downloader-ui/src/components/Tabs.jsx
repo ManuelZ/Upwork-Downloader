@@ -14,7 +14,7 @@ const Tabs = (props) => {
   return (
     <>
       {/* Tabs links */}
-      <div className="flex flex-row mx-2 my-2 lg:mt-5 px-2 lg:pt-4 justify-start mx-auto text-center border-b">
+      <div className="flex flex-row mb-2 lg:mb-4 px-2 lg:pt-4 justify-start text-center border-b">
         <div className={pathname === "/classifier" ? "-mb-px mr-1" : "mr-1"}>
           <Link
             to="/classifier"
@@ -33,7 +33,7 @@ const Tabs = (props) => {
         </div>
       </div>
       {/* Tabs contents */}
-      <div className="">
+      <div className="container mx-auto">
         <Routes>
           <Route path="/classifier" element={<ManualClassifier />} />
           <Route path="/predicter" element={<Predicter />} />
