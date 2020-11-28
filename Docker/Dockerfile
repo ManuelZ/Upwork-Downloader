@@ -60,9 +60,11 @@ ENV PATH $PYENV_ROOT/versions/3.8.6/bin:$PATH
 WORKDIR ./upwork-downloader-ui
 COPY ./upwork-downloader-ui/package.json .
 COPY ./upwork-downloader-ui/tailwind.config.js .
+COPY ./upwork-downloader-ui/postcss.config.js .
 COPY ./upwork-downloader-ui/src ./src
 COPY ./upwork-downloader-ui/public ./public
-RUN npm install
+RUN npm install -g pnpm
+RUN pnpm install
 RUN npm run build
 
 # Backend preparation
