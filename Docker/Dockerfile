@@ -28,7 +28,13 @@ RUN apt-get update && \
     libatlas-base-dev liblapack-dev libopenblas-dev gfortran 
 RUN pyenv virtualenv 3.8.6 myenv
 RUN python -m pip install --upgrade pip setuptools wheel
-RUN python -m pip install numpy pandas scikit-learn scipy
+# In separate layers because these will be compiled and it takes a long time
+RUN python -m pip install numpy
+RUN python -m pip install pandas 
+RUN python -m pip install scikit-learn 
+RUN python -m pip install scipy
+RUN python -m pip install statsmodels
+RUN python -m pip install spacy
 COPY ./backend/requirements.txt .
 RUN python -m pip install --no-cache-dir -r requirements.txt
 
