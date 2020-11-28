@@ -1,13 +1,11 @@
 # Built-in imports
-import sys
-import json
 import sqlite3 as sql
 
 # External imports
 from flask import Flask
 from flask import request
 from flask import jsonify
-from flask import render_template
+from flask import render_template, send_from_directory
 from flask import g # for sqlite3
 from flask_cors import CORS
 import upwork
@@ -27,8 +25,8 @@ from src.exceptions import CredentialsNotFoundError
 
 app = Flask(
     __name__, 
-    static_folder = "../upwork-downloader-ui/build/static",
-    template_folder = "../upwork-downloader-ui/build"
+    template_folder = "../..//upwork-downloader-ui/build",
+    static_folder   = "../../upwork-downloader-ui/build/static",
 )
 
 CORS(app)
@@ -226,7 +224,5 @@ def catch_all(path):
 
 
 if __name__ == "__main__":
-    
-    #app.run(host='127.0.0.1', port=5000, debug=True)
     app.run(host='0.0.0.0', port=5000, debug=True)
     
