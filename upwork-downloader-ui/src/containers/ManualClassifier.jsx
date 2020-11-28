@@ -154,7 +154,7 @@ const ManualClassifier = () => {
     <>
       <JobsCount />
       <div className="flex flex-row justify-between px-4 border-b">
-        <div className="flex w-1/6 items-center justify-center">
+        <div className="flex lg:w-1/6 items-center justify-center">
           <div>
             <Button
               onClick={refillDatabase}
@@ -164,11 +164,11 @@ const ManualClassifier = () => {
             />
           </div>
         </div>
-        <div className="flex flex-col w-4/6">
+        <div className="flex flex-col lg:w-4/6">
           <Filter classes={classes} onToggleFilter={toggleFilter} />
           <Reader handleResults={handleData} activeFilter={classFilter} />
         </div>
-        <div className="flex w-1/6"></div>
+        <div className="flex lg:w-1/6"></div>
       </div>
 
       <div className="flex flex-col m-2 lg:m-5 p-0 lg:p-4">{content}</div>
