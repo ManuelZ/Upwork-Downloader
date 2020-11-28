@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 import LabelSelector from "./LabelSelector";
 import Moment from "react-moment";
-import { CopyToClipboard } from "react-copy-to-clipboard";
-import { FaRegCopy } from "react-icons/fa";
 import Truncate from "react-truncate";
 
 const Job = ({ id, details, handler }) => {
@@ -32,11 +30,6 @@ const Job = ({ id, details, handler }) => {
             {details.title}
           </a>
         </span>
-        <CopyToClipboard text={`https://www.upwork.com/jobs/${id}`}>
-          <button className="ml-4">
-            <FaRegCopy size="0.8em" />
-          </button>
-        </CopyToClipboard>
       </div>
 
       <div className="flex flex-row justify-between mt-1">
@@ -52,7 +45,7 @@ const Job = ({ id, details, handler }) => {
   );
 
   return (
-    <div className="flex flex-col w-full rounded shadow-lg text-left py-2 px-1 lg:px-4 mb-6 min-h-50 items-end bg-gray-50">
+    <div className="flex flex-col w-full rounded shadow-lg text-left py-2 px-1 lg:px-4 mb-6 lg:min-h-50 items-end bg-gray-50">
       <div className="flex flex-row w-full px-6 py-4 justify-between lg:justify-end">
         {jobHeader}
       </div>
