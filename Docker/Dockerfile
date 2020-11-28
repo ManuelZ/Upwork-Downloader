@@ -45,26 +45,26 @@ COPY --from=build /root/.pyenv /root/.pyenv
 COPY --from=build /root/.bashrc /root/.bashrc
 COPY --from=build /root/nltk_data /root/nltk_data
 
+# To make requests to possible https endpoints work
+RUN apt-get update && apt-get install --no-install-recommends -y libssl1.1 ca-certificates
+# Other requirements
+RUN apt-get install --no-install-recommends -y libopenblas-dev libgomp1 sqlite3
+
 # Prepare pyenv's Python to be used
 ENV PYENV_ROOT /root/.pyenv
 ENV PATH $PYENV_ROOT/bin:$PATH
 ENV PYENV_VERSION 3.8.6
 ENV PATH $PYENV_ROOT/versions/3.8.6/bin:$PATH
 
-
 # User-interface preparation
 WORKDIR ./upwork-downloader-ui
 COPY ./upwork-downloader-ui/package.json .
 COPY ./upwork-downloader-ui/tailwind.config.js .
-COPY ./upwork-downloader-ui/public ./public
+COPY ./upwork-downloader-ui/build ./build
+# COPY ./upwork-downloader-ui/public ./public
 COPY ./upwork-downloader-ui/src ./src
 RUN npm install
 RUN npm run build
-
-# To make requests to possible https endpoints work
-RUN apt-get update && apt-get install --no-install-recommends -y libssl1.1 ca-certificates
-# Other requirements
-RUN apt-get install --no-install-recommends -y libopenblas-dev libgomp1 sqlite3
 
 # Backend preparation
 WORKDIR ./backend
