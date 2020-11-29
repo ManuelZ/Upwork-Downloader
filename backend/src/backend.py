@@ -18,7 +18,7 @@ from src.config import TIMESTAMP_FORMAT
 from src.upwork_downloader import load_api_key
 from src.upwork_downloader import load_access_token
 from src.upwork_downloader import search_jobs
-from src.upwork_downloader import add_records
+from src.upwork_downloader import add_records_to_db
 from src.learner import predict_unlabeled_jobs
 from src.exceptions import CredentialsNotFoundError
 
@@ -76,7 +76,7 @@ def download():
     client = upwork.Client(client_config)
 
     jobs = search_jobs(client, SEARCH_TERMS)
-    add_records(jobs)
+    add_records_to_db(jobs)
 
     return jsonify({'msg':"Done"})
 
