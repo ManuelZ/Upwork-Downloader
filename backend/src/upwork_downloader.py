@@ -247,7 +247,7 @@ def add_records_to_db(records):
     Insert records in sqlite3 database.
 
     Args:
-    data: a list of tuples
+        data: a list of tuples
     """
 
     # Transform the data into a list of lists
