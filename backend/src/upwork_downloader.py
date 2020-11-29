@@ -9,6 +9,8 @@ from datetime import datetime
 # External imports
 import upwork
 from upwork.routers.jobs import search
+from upwork.routers import metadata
+from upwork.routers.jobs import profile
 import pandas as pd
 from pytz import timezone
 import requests
@@ -16,6 +18,8 @@ import requests
 # Local imports
 from src import config
 from src.config import SEARCH_TERMS
+from src.config import MAX_ENTRIES_PER_TERM
+from src.config import ENTRIES_PER_RESULT_PAGE
 from src.utils import to_unicode
 from src.exceptions import CredentialsNotFoundError
 
@@ -84,6 +88,7 @@ def load_access_token():
 def search_jobs(client, terms):
     """
     Search jobs using the Python Upwork API based on given search terms.
+    https://developers.upwork.com/?lang=python#jobs_search-for-jobs
 
     Args:
         client: An authenticated upwork.Client object
@@ -96,7 +101,7 @@ def search_jobs(client, terms):
     final_results = []
     for term in terms:
 
-        for i in range(0, config.MAX_ENTRIES_PER_TERM, config.ENTRIES_PER_RESULT_PAGE):
+        for i in range(0, MAX_ENTRIES_PER_TERM, ENTRIES_PER_RESULT_PAGE):
             print(f"A new loop for {term}")
             time.sleep(1.5) # Default API limit
 
@@ -104,7 +109,7 @@ def search_jobs(client, terms):
                 'q'           : term.split(' '),  # Terms treated with AND
                 'job_status'  : 'open',
                 'days_posted' : config.DAYS_BACK_TO_SEARCH,
-                'paging'      : f'{i};{config.ENTRIES_PER_RESULT_PAGE}' # offset;count.
+                'paging'      : f'{i};{ENTRIES_PER_RESULT_PAGE}' # offset;count
             }
 
             try:
@@ -128,7 +133,116 @@ def search_jobs(client, terms):
     return final_results
 
 
-def add_records(records):
+def get_jobs_by_id(client, ids):
+    """
+    Return detailed profile information about the job. 
+    https://developers.upwork.com/?lang=python#jobs_get-job-profile
+
+    Args: 
+        ids: List of ids
+    """
+
+    df = pd.DataFrame(columns=config.FIELDS_NAMES)
+    
+    def get_skills(skills):        
+        if isinstance(skills, unicode):
+            return skills
+
+        skills = skills.get('op_required_skill')
+
+        if isinstance(skills, str):
+            return skills
+
+        if isinstance(skills, dict):
+            return skills.get('skill')
+        
+        try:
+            skills = map(lambda x: x.get('skill'), skills)
+        except Exception as e:
+            print("@get_skills - {}, {}".format(e, response))
+        
+        return ";".join(list(skills))
+
+    def get_status(status):
+        if (status == 'Active'):
+            status = 'Open'
+        elif (status == 'Filled'):
+            status = 'Closed'
+        return status
+
+    def get_verification_status(status):
+        if status:
+            return 'VERIFIED'
+        else:
+            return 'None'
+    
+    def get_duration(duration):
+        if not duration:
+            return 'None'
+        return duration
+
+
+    # The profile api can receive requests for up to 20 profiles. Unfortunately
+    # when some of those profiles are "disabled" (I have not found any 
+    # definition of that in the documentation. Even more,  the "disabled" 
+    # profiles can still be accessed through the normal web interface), the
+    # whole query fails.
+    # That's why I'm requesting them one by one.
+    disabled_profiles = []
+    for id in ids:
+
+        print(f"Job id: {id}")
+
+        try:
+            response = profile.Api(client).get_specific(id)
+            if 'error' in response:
+                print(f"Error when requesting '{id}':\n{response['error']['message']}\n")
+                disabled_profiles.append(id)
+            else:
+                print(f"Succesful response for job '{id}'\n")
+            continue
+        
+        except Exception as e:
+            print(f"Error: {e}")
+            continue
+        
+        # op means "Original Poster"
+        op = response.get('profile', {})
+        buyer = op.get('buyer', {})
+        
+        row = pd.Series([
+            id,
+            response.get('op_title'),
+            response.get('op_description'),
+            response.get('job_type'),
+            response.get('amount'),
+            get_status(response.get('ui_opening_status')),
+            response.get('op_job_category_v2', {}).get('op_job_category_v', {}).get('groups', {}).get('group', {}).get('name'),
+            response.get('op_job_category_v2', {}).get('op_job_category_v', {}).get('name'),
+            "http://www.upwork.com/jobs/{}".format(id),
+            response.get('workload'), # bad
+            get_duration(response.get('op_eng_duration')),
+            datetime.fromtimestamp(int(response.get('op_ctime'))//1000, tz=timezone('America/Lima')).strftime("%Y-%m-%dT%H:%M:%S%z"),
+            get_skills(response.get('op_required_skills')),
+            "{:.2f}".format(float(buyer.get('op_adjusted_score'))),
+            response.get('op_tot_feedback'),
+            buyer.get('op_tot_jobs_posted'),
+            get_verification_status(response.get('op_cny_upm_verified')),
+            buyer.get('op_tot_fp_asgs'),
+            buyer.get('op_country')
+        ], name=id, index=config.FIELDS_NAMES)
+
+        df = df.append(row)
+    df.set_index('id', inplace=True, drop=True)
+    return df
+
+
+def load_ids_from_file(filename):
+    with open(filename) as f:
+        return [line.rstrip() for line in f]
+
+
+def add_records_to_db(records):
     """
     Insert records in sqlite3 database.
 
@@ -187,4 +301,4 @@ if __name__ == "__main__":
 
     client = upwork.Client(client_config)
     jobs = search_jobs(client, SEARCH_TERMS)
-    add_records(jobs)
+    add_records_to_db(jobs)
