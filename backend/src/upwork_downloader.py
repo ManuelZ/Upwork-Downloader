@@ -127,7 +127,7 @@ def search_jobs(client, terms):
 
             print(f'Fetched {len(jobs)} results for term "{term}"')
 
-            if len(jobs) < config.ENTRIES_PER_RESULT_PAGE:
+            if len(jobs) < ENTRIES_PER_RESULT_PAGE:
                 break
     
     return final_results
