@@ -172,6 +172,21 @@ def add_records(records):
         print(e)
 
 
+def get_metadata(client, type):
+    """
+    https://developers.upwork.com/?lang=python#metadata
+    """
+    if type == "categories":
+        return metadata.Api(client).get_categories_v2()
+    
+    elif type == "skills":
+        return metadata.Api(client).get_skills_v2()
+    
+    elif type == "specialties":
+        # try client.get("/profiles/v1/metadata/specialties")
+        return metadata.Api(client).get_specialties()
+        
+
 if __name__ == "__main__":
 
     api_key, api_key_secret = load_api_key()
