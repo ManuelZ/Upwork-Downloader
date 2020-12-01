@@ -5,11 +5,12 @@ FROM debian:buster-slim AS build
 
 RUN apt-get update && \
     apt-get install --no-install-recommends -y \
-    git gcc build-essential libssl1.1 libssl-dev zlib1g-dev ca-certificates \
+    git build-essential libssl1.1 libssl-dev ca-certificates zlib1g-dev  \
     libbz2-dev libreadline-dev libsqlite3-dev llvm libncurses5-dev \
-    libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev curl wget
+    libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev curl wget \
+    libatlas-base-dev liblapack-dev libopenblas-dev gfortran
 
-# Notice: weird problem with curl and TLS certificates.
+# Note: weird problem with curl and TLS certificates.
 # I need to manually update the cacert certificates using wget to let the 
 # pyenv.run script (that uses curl) work.
 ENV CURL_CA_BUNDLE /root/cacert.pem
@@ -22,10 +23,7 @@ RUN echo 'eval "$(pyenv init -)"' >> /root/.bashrc
 RUN echo 'eval "$(pyenv virtualenv-init -)"' >> /root/.bashrc
 
 # pip builds
-ENV PATH $PYENV_ROOT/versions/3.8.6/bin:$PATH
-RUN apt-get update && \
-    apt-get install --no-install-recommends -y \
-    libatlas-base-dev liblapack-dev libopenblas-dev gfortran 
+ENV PATH $PYENV_ROOT/versions/3.8.6/bin:$PATH   
 RUN pyenv virtualenv 3.8.6 myenv
 RUN python -m pip install --upgrade pip setuptools wheel
 # In separate layers because these will be compiled and it takes a long time
@@ -34,7 +32,9 @@ RUN python -m pip install pandas
 RUN python -m pip install scikit-learn 
 RUN python -m pip install scipy
 RUN python -m pip install statsmodels
-RUN python -m pip install spacy
+RUN python -m pip install cython
+# run "lscpu" to identify your architecture e.g. cortexa53, cortexa57
+RUN BLIS_ARCH="cortexa53" python -m pip install spacy --no-binary blis
 COPY ./backend/requirements.txt .
 RUN python -m pip install --no-cache-dir -r requirements.txt
 
@@ -47,10 +47,10 @@ FROM node:12-buster-slim AS runtime
 COPY --from=build /root/.pyenv /root/.pyenv
 COPY --from=build /root/.bashrc /root/.bashrc
 
-# To make requests to possible https endpoints work
-RUN apt-get update && apt-get install --no-install-recommends -y libssl1.1 ca-certificates
-# Other requirements
-RUN apt-get install --no-install-recommends -y libopenblas-dev libgomp1 sqlite3
+# Some requirements
+RUN apt-get update && \
+    apt-get install --no-install-recommends -y \
+    libssl1.1 ca-certificates libopenblas-dev libgomp1 sqlite3
 
 # Prepare pyenv's Python to be used
 ENV PYENV_ROOT /root/.pyenv

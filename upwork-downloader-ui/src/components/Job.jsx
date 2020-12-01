@@ -24,52 +24,51 @@ const Job = ({ id, details, handler }) => {
 
   const { Good, Maybe, Bad } = details;
 
-  let jobHeader = (
-    <>
-      <ScoreDisplay
-        Good={toPercentage(Good)}
-        Maybe={toPercentage(Maybe)}
-        Bad={toPercentage(Bad)}
-      />
-      <div className="flex flex-col w-full lg:w-5/6 pb-2 border-b  justify-between">
-        <div className="font-bold text-xl mb-2 ">
-          <span className="text-justify">
-            <a
-              href={`https://www.upwork.com/jobs/${id}`}
-              target="_blank"
-              rel="noreferrer"
-            >
-              {details.title}
-            </a>
-          </span>
-        </div>
-
-        <div className="flex flex-row justify-between mt-1">
-          <div className="text-sm">
-            {details.job_type}
-            {`${details.job_type === "Fixed" ? ` - $${details.budget}` : ""}`}
-          </div>
-          <div className="text-sm text-gray-600 text-right">
-            <Moment fromNow>{details.date_created}</Moment>
-          </div>
-        </div>
-      </div>
-    </>
-  );
+  console.log(details);
 
   return (
     <div className="flex flex-col w-full rounded shadow-lg text-left py-2 px-1 lg:px-4 mb-6 lg:min-h-50 items-end bg-gray-50">
-      <div className="flex flex-row w-full px-4 py-4 justify-between lg:justify-end">
-        {jobHeader}
-      </div>
-      <div className="flex flex-col lg:flex-row flex-grow w-full px-4 pb-4">
-        <LabelSelector
-          id={id}
-          clickHandler={handler}
-          selectedOption={details.label || details.predicted}
-        />
+      <div className="flex flex-row w-full p-4">
+        <div className="flex flex-col w-1/3 lg:w-1/6 mr-4 lg:mr-0 justify-center">
+          <p className="font-light text-left text-sm mb-1">
+            Feedback: {details["client.feedback"].toFixed(2)} (
+            {details["client.reviews_count"]})
+          </p>
+          <p className="font-light text-left text-sm">
+            Jobs posted: {details["client.jobs_posted"]}
+          </p>
+        </div>
+        <div className="flex flex-wrap w-4/6 content-between border-b">
+          <div className="font-bold text-xl mb-2">
+            <span className="text-justify">
+              <a
+                href={`https://www.upwork.com/jobs/${id}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {details.title}
+              </a>
+            </span>
+          </div>
+          <div className="flex flex-row w-full justify-between">
+            <div className="text-sm">
+              {details.job_type}
+              {`${details.job_type === "Fixed" ? ` - $${details.budget}` : ""}`}
+            </div>
+            <div className="text-sm text-gray-600 text-right">
+              <Moment fromNow>{details.date_created}</Moment>
+            </div>
+          </div>
+        </div>
 
-        <div className="lg:w-5/6 pt-8 pb-2 lg:py-4 break-words whitespace-pre-line text-justify">
+        <ScoreDisplay
+          Good={toPercentage(Good)}
+          Maybe={toPercentage(Maybe)}
+          Bad={toPercentage(Bad)}
+        />
+      </div>
+      <div className="flex flex-col lg:flex-row flex-grow w-full px-4 pb-4 justify-end">
+        <div className="lg:w-4/6 pt-8 pb-2 lg:py-4 break-words whitespace-pre-line text-justify">
           <Truncate
             lines={truncated && 5}
             ellipsis={
@@ -99,6 +98,12 @@ const Job = ({ id, details, handler }) => {
             </span>
           )}
         </div>
+
+        <LabelSelector
+          id={id}
+          clickHandler={handler}
+          selectedOption={details.label || details.predicted}
+        />
       </div>
     </div>
   );

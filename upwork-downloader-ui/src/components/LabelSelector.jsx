@@ -2,7 +2,7 @@ import React from "react";
 
 const LabelSelector = ({ id, clickHandler, selectedOption }) => {
   let labelClass =
-    "rounded-lg shadow-md hover:cursor-pointer py-4 font-semibold ";
+    "rounded-lg shadow-md hover:cursor-pointer py-4 font-semibold w-24 text-center ";
   let onClass = "bg-green-400 ";
   let offClass = "";
 
@@ -12,7 +12,7 @@ const LabelSelector = ({ id, clickHandler, selectedOption }) => {
 
   // https://blog.bitsrc.io/customise-radio-buttons-without-compromising-accessibility-b03061b5ba93
   return (
-    <div className="flex flex-row lg:flex-col py-3 lg:py-0 lg:w-1/6 items-start justify-between lg:justify-around">
+    <div className="flex flex-row lg:flex-col py-3 lg:py-0 lg:w-1/6 items-center justify-between lg:justify-around">
       <>
         <input
           id={`class1-${id}`}

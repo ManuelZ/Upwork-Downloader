@@ -8,7 +8,7 @@ const Predicter = () => {
   const [fetching, setFetching] = useState(false);
   const [body, setBody] = useState({
     retrain: true,
-    window: 2,
+    window: 1,
   });
 
   const buttonRef = useRef(null);

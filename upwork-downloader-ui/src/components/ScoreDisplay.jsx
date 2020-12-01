@@ -3,7 +3,7 @@ import React from "react";
 const ScoreDisplay = ({ Good, Maybe, Bad }) => {
   const best = Math.max(Good, Maybe, Bad);
   return (
-    <div className="hidden lg:flex lg:flex-col items-center py-2 pr-8 lg:w-1/6">
+    <div className="hidden lg:flex lg:flex-col items-center py-2 px-6 lg:w-1/6">
       <div className="shadow w-full bg-grey-400">
         <div
           className={
