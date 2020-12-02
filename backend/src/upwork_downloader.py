@@ -8,6 +8,7 @@ from datetime import datetime
 
 # External imports
 import upwork
+import numpy as np
 from upwork.routers.jobs import search
 from upwork.routers import metadata
 from upwork.routers.jobs import profile
@@ -83,6 +84,21 @@ def load_access_token():
         access_token, access_token_secret = request_access_token()
     
     return access_token, access_token_secret
+
+
+def get_authenticated_client():
+    api_key, api_key_secret = load_api_key()
+    access_token, access_token_secret = load_access_token()
+    
+    client_config = upwork.Config({
+        'consumer_key'        : api_key,
+        'consumer_secret'     : api_key_secret,
+        'access_token'        : access_token,
+        'access_token_secret' : access_token_secret
+    })
+    client = upwork.Client(client_config)
+    
+    return client
 
 
 def search_jobs(client, terms):
@@ -181,7 +197,6 @@ def get_jobs_by_id(client, ids):
             return 'None'
         return duration
 
-
     # The profile api can receive requests for up to 20 profiles. Unfortunately
     # when some of those profiles are "disabled" (I have not found any 
     # definition of that in the documentation. Even more,  the "disabled" 
@@ -200,51 +215,59 @@ def get_jobs_by_id(client, ids):
                 disabled_profiles.append(id)
             else:
                 print(f"Succesful response for job '{id}'\n")
-            continue
         
         except Exception as e:
             print(f"Error: {e}")
             continue
         
         # op means "Original Poster"
-        op = response.get('profile', {})
+        op    = response.get('profile', {})
         buyer = op.get('buyer', {})
         
-        row = pd.Series([
-            id,
-            response.get('op_title'),
-            response.get('op_description'),
-            response.get('job_type'),
-            response.get('amount'),
-            get_status(response.get('ui_opening_status')),
-            response.get('op_job_category_v2', {}).get('op_job_category_v', {}).get('groups', {}).get('group', {}).get('name'),
-            response.get('op_job_category_v2', {}).get('op_job_category_v', {}).get('name'),
-            "http://www.upwork.com/jobs/{}".format(id),
-            response.get('workload'), # bad
-            get_duration(response.get('op_eng_duration')),
-            datetime.fromtimestamp(int(response.get('op_ctime'))//1000, tz=timezone('America/Lima')).strftime("%Y-%m-%dT%H:%M:%S%z"),
-            get_skills(response.get('op_required_skills')),
-            "{:.2f}".format(float(buyer.get('op_adjusted_score'))),
-            response.get('op_tot_feedback'),
-            buyer.get('op_tot_jobs_posted'),
-            get_verification_status(response.get('op_cny_upm_verified')),
-            buyer.get('op_tot_fp_asgs'),
-            buyer.get('op_country')
-        ], name=id, index=config.FIELDS_NAMES)
 
-        df = df.append(row)
-    df.set_index('id', inplace=True, drop=True)
-    return df
+        preferred_hourly_rate_min = op.get('op_pref_hourly_rate_min')
+        if preferred_hourly_rate_min in ("", 0, "0"):
+            preferred_hourly_rate_min = None
+
+        preferred_hourly_rate_max = op.get('op_pref_hourly_rate_max')
+        if preferred_hourly_rate_max in ("", 0, "0"):
+            preferred_hourly_rate_max = None
+
+        print(f"preferred_hourly_rate_min: {preferred_hourly_rate_min}")
+        print(f"preferred_hourly_rate_max: {preferred_hourly_rate_max}")
+    
+    print(f"Disabled profiles: {disabled_profiles}")
+        
+    #     row = pd.Series([
+    #         id,
+    #         response.get('op_title'),
+    #         response.get('op_description'),
+    #         response.get('job_type'),
+    #         response.get('amount'),
+    #         get_status(response.get('ui_opening_status')),
+    #         response.get('op_job_category_v2', {}).get('op_job_category_v', {}).get('groups', {}).get('group', {}).get('name'),
+    #         response.get('op_job_category_v2', {}).get('op_job_category_v', {}).get('name'),
+    #         "http://www.upwork.com/jobs/{}".format(id),
+    #         response.get('workload'), # bad
+    #         get_duration(response.get('op_eng_duration')),
+    #         datetime.fromtimestamp(int(response.get('op_ctime'))//1000, tz=timezone('America/Lima')).strftime("%Y-%m-%dT%H:%M:%S%z"),
+    #         get_skills(response.get('op_required_skills')),
+    #         "{:.2f}".format(float(buyer.get('op_adjusted_score'))),
+    #         response.get('op_tot_feedback'),
+    #         buyer.get('op_tot_jobs_posted'),
+    #         get_verification_status(response.get('op_cny_upm_verified')),
+    #         buyer.get('op_tot_fp_asgs'),
+    #         buyer.get('op_country')
+    #     ], name=id, index=config.FIELDS_NAMES)
+
+    #     df = df.append(row)
+    # df.set_index('id', inplace=True, drop=True)
+    # return df
 
 
-def load_ids_from_file(filename):
-    with open(filename) as f:
-        return [line.rstrip() for line in f]
-
-
-def add_records_to_db(records):
+def insert_records_into_db(records):
     """
-    Insert records in sqlite3 database.
+    Insert records in sqlite3 database 
 
     Args:
         data: a list of tuples
@@ -286,6 +309,86 @@ def add_records_to_db(records):
         print(e)
 
 
+def update_records(modifications):
+    """
+    Update multiple columns of multiple rows with new values.
+
+    Args:
+        modifications: a dict with keys "columns", "ids" and "values".
+
+    Example:
+    
+        modifications = {
+                "columns" : ["pref_hourly_rate_min", "pref_hourly_rate_max"],
+                "ids"     : ["~017fe3d81c7b21ee5f"],
+                "values"  : [[13,13]]
+        }
+    
+    Notice how the length of ids and values is the same.
+    """
+
+    if not isinstance(modifications, dict):
+        raise Exception("Must provide a dict.")
+    
+    if not all(k in modifications for k in ("columns","ids", "values")):
+        raise Exception("Input dict must have keys 'columns', 'ids' and 'values'")
+
+    if not len(modifications["ids"]) == len(modifications["values"]):
+        raise Exception("Must provide same number of ids rows to update")
+
+    columns = modifications["columns"]
+    values  = modifications["values"]
+    ids     = modifications["ids"]
+
+    for i in range(len(ids)):
+        assert len(values[i]) == len(columns)
+
+
+    update_sql = 'UPDATE {} SET {} WHERE id=?'.format(
+        config.TABLE_NAME,
+        ','.join(f'"{c}"=?' for c in columns)
+    )
+
+    to_insert = []
+    for i in range(len(ids)):
+        to_insert.append( values[i] + [ids[i]] )
+
+    try:
+        with sql.connect(config.DATABASE) as conn:
+            cur = conn.cursor()
+            cur.executemany(update_sql, to_insert)
+            conn.commit()
+
+        if cur.rowcount < 1:
+            msg = 'Failed to update, does that id exist?'
+        
+        else:
+            msg = 'Success'
+
+    except Exception as e:
+        msg = f"Error in UPDATE operation: {e}"
+    
+    return msg
+
+
+def get_job_invitees(client, jobid):
+    """
+    Return the ids of the freelancers that the client has invited.
+    """
+
+    response = profile.Api(client).get_specific(jobid)
+    invitees = response["profile"]["candidates"]
+    
+    if invitees != "":
+        invitees = invitees.get("candidate", []) 
+    else:
+        invitees = []
+    invitees = [x["ciphertext"] for x in invitees]
+    
+    return invitees
+
+
+
 if __name__ == "__main__":
 
     api_key, api_key_secret = load_api_key()
@@ -301,4 +404,4 @@ if __name__ == "__main__":
 
     client = upwork.Client(client_config)
     jobs = search_jobs(client, SEARCH_TERMS)
-    add_records_to_db(jobs)
+    insert_records_into_db(jobs)

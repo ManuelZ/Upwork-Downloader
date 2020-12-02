@@ -1,5 +1,6 @@
 # Built-in imports
 import sqlite3 as sql
+import os
 
 # External imports
 from flask import Flask
@@ -18,7 +19,8 @@ from src.config import TIMESTAMP_FORMAT
 from src.upwork_downloader import load_api_key
 from src.upwork_downloader import load_access_token
 from src.upwork_downloader import search_jobs
-from src.upwork_downloader import add_records_to_db
+from src.upwork_downloader import insert_records_into_db
+from src.upwork_downloader import get_job_invitees
 from src.learner import predict_unlabeled_jobs
 from src.exceptions import CredentialsNotFoundError
 
@@ -48,20 +50,35 @@ def get_conn():
 
 @app.route('/predict', methods=['POST'])
 def predict():
+    """
+    Return unlabeled jobs with a predicted class label.
+    """
+
     body = request.get_json()
     retrain = True if body.get('retrain') == "true" else False
     window_days = body.get('window', 2)
-    jobs, report = predict_unlabeled_jobs(retrain=retrain, n_jobs=20, window_days=window_days)
+    
+    jobs, report = predict_unlabeled_jobs(
+        retrain     = retrain,
+        n_jobs      = 20,
+        window_days = window_days
+    )
+    
     jobs = [job.to_dict() for job in jobs]
+    
     return jsonify({'msg': jobs, 'report':report.to_string()})
 
 
 @app.route('/download', methods=['POST'])
 def download():
+    """
+    Download jobs via the Upwork's API.
+    """
+    
     try:
         api_key, api_key_secret = load_api_key()
+    
     except CredentialsNotFoundError as e:
-        import os
         return jsonify({'msg': os.listdir("./data")})        
 
     access_token, access_token_secret = load_access_token()
@@ -76,7 +93,7 @@ def download():
     client = upwork.Client(client_config)
 
     jobs = search_jobs(client, SEARCH_TERMS)
-    add_records_to_db(jobs)
+    insert_records_into_db(jobs)
 
     return jsonify({'msg':"Done"})
 
@@ -91,6 +108,10 @@ def close_connection(exception):
 
 @app.route('/create_jobs_table', methods=['GET', 'POST'])
 def create_table():
+    """
+    NOT USED YET
+    """
+    
     try:
         conn = get_conn()
         cur = conn.cursor()
@@ -115,20 +136,28 @@ def create_table():
                 "client.payment_verification_status" TEXT,
                 "client.past_hires" INTEGER,
                 "client.country" TEXT,
+                "pref_hourly_rate_min" NULL,
+                "pref_hourly_rate_max" NULL,
                 label TEXT
             )"""
         create_table_sql = create_table_sql.format(TABLE_NAME)
         cur.execute(create_table_sql)
         conn.commit()
         msg = 'Table created'
+    
     except Exception as e:
         msg = 'Error when creating table'
+    
     finally:
         return jsonify({"msg": msg})
 
 
 @app.route('/get_jobs', methods = ['GET'])
 def get_jobs():
+    """
+    Return jobs queried from the database. 
+    """
+    
     if request.args:
         try:
             limit = int(request.args.get('limit'))
@@ -138,16 +167,21 @@ def get_jobs():
             offset = offset if (offset >= 0 and offset <1e6) else 0
 
             filters = request.args.get('filter', '')
+            
             if filters != '':
-                active_filter = ','.join(f'"{f.lower().title()}"' for f in filters.split(','))
+                active_filter = ','.join(
+                    f'"{f.lower().title()}"' for f in filters.split(','))
+            
             else:
                 active_filter = ''
+        
         except Exception as e:
-            msg = f"Trouble when parsing the given arguments:\n{e}"
+            msg = f"Trouble when parsing the given arguments:\n{e}."
             print(msg)
             return jsonify({'msg': msg})
+    
     else:
-        msg = 'Missing parameters in the request'
+        msg = 'Missing parameters in the request.'
         
         return jsonify({'msg': msg})
     
@@ -166,11 +200,15 @@ def get_jobs():
         data = ''
     
     finally:
+
         return jsonify({'msg':msg, 'data':data})
 
 
 @app.route('/count_jobs', methods = ['GET'])
 def count_jobs():
+    """
+    Return the count of categorized jobs in the database.
+    """
     
     count_sql = f"SELECT COUNT(*) from {TABLE_NAME} WHERE label NOT IN ('Uncategorized')"
 
@@ -191,30 +229,54 @@ def count_jobs():
 
 @app.route('/update_job', methods = ['GET', 'POST'])
 def update_job():
+    """
+    Update the label of a job given its id.
+    """
     
     if request.args:
-        id = request.args.get('id')
+        jobid = request.args.get('id')
         label = request.args.get('label')
+        msg   = update_job(jobid, 'label', label)
+    
+    else:
+        msg =  "Missing parameters."
 
-    update_sql = f"UPDATE {TABLE_NAME} SET label=? WHERE id=?"
+    return jsonify({'msg':msg})
+
+
+@app.route('/get_invitees', methods = ['GET', 'POST'])
+def get_invitees():
+    """
+    """
 
     try:
-        conn = get_conn()
-        cur = conn.cursor()        
-        cur.execute(update_sql, (label, id))
-        conn.commit()
-
-        if cur.rowcount < 1:
-            msg = 'Failed to update, does that id exist? (msg by Manuel)'
-        else:
-            msg = 'Success'
-
-    except Exception as e:
-        msg = f"Error in UPDATE operation: {e}"
-        print(msg)
+        api_key, api_key_secret = load_api_key()
     
-    finally:
-        return jsonify({'msg':msg})
+    except CredentialsNotFoundError as e:
+        return jsonify({'msg': os.listdir("./data")})        
+
+    access_token, access_token_secret = load_access_token()
+    
+    client_config = upwork.Config({
+        'consumer_key': api_key,
+        'consumer_secret': api_key_secret,
+        'access_token': access_token,
+        'access_token_secret': access_token_secret
+    })
+
+    client = upwork.Client(client_config)
+    
+    if request.args:
+        jobid = request.args.get('jobid')
+        
+        if jobid:
+            candidates = get_job_invitees(client, jobid)
+        
+        return jsonify({'msg': candidates})
+    
+    else:
+        return jsonify({'msg': "error: no jobid provided"})
+
 
 # This will be used to return the react app
 @app.route('/', defaults={'path': ''}, methods=['GET'])

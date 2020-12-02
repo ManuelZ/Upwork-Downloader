@@ -19,5 +19,6 @@ def load_database_data(filter=['Good', 'Bad', 'Maybe']):
         names = names = [description[0] for description in cur.description]
         df = pd.DataFrame(rows, columns=names)
         return df
+    
     except Exception as e:
         print(f"Error in SELECT operation: {e}")
