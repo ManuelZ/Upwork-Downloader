@@ -1,5 +1,6 @@
 # Built-in imports
 import sqlite3 as sql
+import json
 
 # External imports
 from flask import Flask
@@ -46,6 +47,14 @@ def get_conn():
     return conn
 
 
+@app.teardown_appcontext
+def close_connection(exception):
+    """ From https://flask.palletsprojects.com/en/rtd/patterns/sqlite3/ """
+    conn = getattr(g, '_database', None)
+    if conn is not None:
+        conn.close()
+
+
 @app.route('/predict', methods=['POST'])
 def predict():
     body = request.get_json()
@@ -79,14 +88,6 @@ def download():
     add_records(jobs)
 
     return jsonify({'msg':"Done"})
-
-
-@app.teardown_appcontext
-def close_connection(exception):
-    """ From https://flask.palletsprojects.com/en/rtd/patterns/sqlite3/ """
-    conn = getattr(g, '_database', None)
-    if conn is not None:
-        conn.close()
 
 
 @app.route('/create_jobs_table', methods=['GET', 'POST'])
@@ -169,24 +170,42 @@ def get_jobs():
         return jsonify({'msg':msg, 'data':data})
 
 
-@app.route('/count_jobs', methods = ['GET'])
+@app.route('/count_jobs', methods = ['POST'])
 def count_jobs():
-    
-    count_sql = f"SELECT COUNT(*) from {TABLE_NAME} WHERE label NOT IN ('Uncategorized')"
+    if request.method == 'POST':
 
-    try:
-        conn = get_conn()
-        cur = conn.cursor()
-        cur.execute(count_sql)
-        rows = cur.fetchall()
-        data = [dict(row) for row in rows]
-        msg = data[0]['COUNT(*)']
-        
-    except Exception as e:
-        msg = f"Error in query: {e}"
+        body = request.get_json()
+        class_filter = body.get('classFilter')
+        class_filter = ','.join(f'"{k.capitalize()}"' for k,v in filter(
+            lambda x: x[1], class_filter.items()
+        ))
     
-    finally:
-        return jsonify({'msg':msg})
+        count_sql = f'''
+            SELECT 
+                label,COUNT(*) AS count 
+            FROM 
+                {TABLE_NAME} 
+            WHERE 
+                label IN ({class_filter})
+            GROUP BY 
+                label
+        '''
+
+        try:
+            conn = get_conn()
+            cur  = conn.cursor()
+            cur.execute(count_sql)
+            rows = cur.fetchall()
+            data = [dict(row) for row in rows]
+            msg = {}
+            for x in data:
+                msg[x['label']] = x['count']
+            
+        except Exception as e:
+            msg = f"Error when making the query:\n{e}"
+        
+        finally:
+            return jsonify({'msg':msg})
 
 
 @app.route('/update_job', methods = ['GET', 'POST'])

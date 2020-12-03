@@ -394,7 +394,7 @@ def train_bag_of_quantized_word_embeddings(
         searcher = GridSearchCV(
             estimator          = pipeline, 
             param_grid         = grid,
-            n_jobs             = 3, 
+            n_jobs             = 2, 
             return_train_score = True, 
             refit              = True,
             cv                 = StratifiedKFold(n_splits=3),

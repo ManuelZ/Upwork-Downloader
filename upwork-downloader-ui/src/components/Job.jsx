@@ -24,8 +24,6 @@ const Job = ({ id, details, handler }) => {
 
   const { Good, Maybe, Bad } = details;
 
-  console.log(details);
-
   return (
     <div className="flex flex-col w-full rounded shadow-lg text-left py-2 px-1 lg:px-4 mb-6 lg:min-h-50 items-end bg-gray-50">
       <div className="flex flex-row w-full p-4">
