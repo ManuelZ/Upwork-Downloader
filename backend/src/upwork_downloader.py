@@ -131,11 +131,34 @@ def search_jobs(client, terms):
             try:
                 results = search.Api(client).find(params)
                 jobs = results.get('jobs', [])
-                # Modify the date_created so that the timezone has a format of 
-                # "+00:00" instead of "+0000" since sqlite3 can only parse that
+
                 for job in jobs:
+                    # Modify the date_created so that the timezone has a format
+                    # of "+00:00" instead of "+0000" since sqlite3 can only 
+                    # parse that
                     job['date_created'] = datetime.strptime(
                         job['date_created'], "%Y-%m-%dT%H:%M:%S%z").isoformat()
+                    
+                    # Get extra data about the job using the Profile API
+                    profile_response = ( 
+                        profile.Api(client).get_specific(job['id'])
+                    )
+                    
+                    if 'error' in profile_response:
+                        print(
+                            f"Error when requesting '{job['id']}':"
+                            f"{profile_response['error']['message']}\n")
+                        
+                        continue
+                    
+                    else:
+                        print(f"Succesful response for job '{job['id']}'\n")
+                    
+                    job['pref_hourly_rate_min'] = (
+                        get_attribute_from_profile_api(
+                        profile_response, 'op_pref_hourly_rate_min'
+                    ))
+
                 final_results.extend(jobs)
             
             except requests.exceptions.ConnectionError as e:
@@ -147,6 +170,28 @@ def search_jobs(client, terms):
                 break
     
     return final_results
+
+
+def get_attribute_from_profile_api(job_profile_response, attribute):
+    """
+    Given a response from the Job Profile API, return the requested attribute.
+    """
+    
+    # op means "Original Poster"
+    op    = job_profile_response.get('profile', {})
+    buyer = op.get('buyer', {})
+
+    if attribute == 'op_pref_hourly_rate_min':
+        value = op.get(attribute)
+        if value in ("", 0, "0"):
+            value = None
+    
+    elif attribute == 'op_pref_hourly_rate_max':
+        value = op.get(attribute)
+        if value in ("", 0, "0"):
+            value = None
+    
+    return value
 
 
 def get_jobs_by_id(client, ids):
@@ -390,18 +435,6 @@ def get_job_invitees(client, jobid):
 
 
 if __name__ == "__main__":
-
-    api_key, api_key_secret = load_api_key()
-
-    access_token, access_token_secret = load_access_token()
-    
-    client_config = upwork.Config({
-        'consumer_key': api_key,
-        'consumer_secret': api_key_secret,
-        'access_token': access_token,
-        'access_token_secret': access_token_secret
-    })
-
-    client = upwork.Client(client_config)
+    client = get_authenticated_client()
     jobs = search_jobs(client, SEARCH_TERMS)
     insert_records_into_db(jobs)
