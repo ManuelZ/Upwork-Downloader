@@ -43,12 +43,18 @@ pd.set_option('display.max_columns', 5000)
 pd.set_option('display.max_colwidth', 5000)
 
 
-def predict_unlabeled_jobs(retrain=False, n_jobs=10, window_days=2):
+def predict_unlabeled_jobs(
+    retrain     = False,
+    n_jobs      = 10,
+    window_days = 2,
+    to_predict  = { 'Good': True, 'Maybe': True, 'Bad': False }
+    ):
     """
     Args:
         n_jobs      : Number of jobs to return
         window_days : How many days to look back for unlabeled jobs
     """
+
     start = time()
 
     unlabeled = load_unlabeled_data()
@@ -90,18 +96,20 @@ def predict_unlabeled_jobs(retrain=False, n_jobs=10, window_days=2):
 
         # TODO: pass search as a parameter directly from the UI
         
-        # model = train_with_bag_of_words(
+        model = train_with_bag_of_words(
+            X_train, y_train, scorer, search=False
+        )
+
+        # model = train_bag_of_quantized_word_embeddings(
         #     X_train, y_train, scorer, search=False
         # )
-
-        model = train_bag_of_quantized_word_embeddings(
-             X_train, y_train, scorer, search=False
-        )
 
         print("Creating performance report...")
         report = training_report(
             model, X_train, y_train, X_test, y_test, le, scorer
         )
+
+        print(report)
 
         print("Saving model and report...")
         pickle.dump(model, open(MODEL_FILENAME, 'wb'))
@@ -185,18 +193,17 @@ def predict_unlabeled_jobs(retrain=False, n_jobs=10, window_days=2):
             if not (now < row['date_created'] + window):
                 continue
 
-            if type_df == "Good":
+            if (type_df == "Good") and to_predict['Good']:
                 selected_jobs.append(row)
                 n_collected += 1
 
-            elif type_df == "Maybe":
+            elif (type_df == "Maybe") and to_predict['Maybe']:
                 selected_jobs.append(row)
                 n_collected += 1
             
-            elif type_df == "Bad":
-                if row["score"] < 0.3:
-                    selected_jobs.append(row)
-                    n_collected += 1
+            elif (type_df == "Bad") and to_predict['Bad']:
+                selected_jobs.append(row)
+                n_collected += 1
 
     end = time()
     print(f"Prediction took {end - start:.1f} seconds.")
@@ -430,7 +437,3 @@ def training_report(model, X_train, y_train, X_test, y_test, le, scorer):
     report = pd.DataFrame(report).round(2).T
 
     return report
-
-
-if __name__ == "__main__":
-    predict_unlabeled_jobs()
