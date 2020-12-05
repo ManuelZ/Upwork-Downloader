@@ -57,11 +57,22 @@ def close_connection(exception):
 
 @app.route('/predict', methods=['POST'])
 def predict():
+    
     body = request.get_json()
+
+    classes_to_predict = body.get('to_predict')
     retrain = True if body.get('retrain') == "true" else False
     window_days = body.get('window', 2)
-    jobs, report = predict_unlabeled_jobs(retrain=retrain, n_jobs=20, window_days=window_days)
+    
+    jobs, report = predict_unlabeled_jobs(
+        window_days = window_days,
+        retrain     = retrain,
+        n_jobs      = 20,
+        to_predict  = classes_to_predict
+    )
+
     jobs = [job.to_dict() for job in jobs]
+    
     return jsonify({'msg': jobs, 'report':report.to_string()})
 
 
@@ -175,6 +186,7 @@ def count_jobs():
     if request.method == 'POST':
 
         body = request.get_json()
+        
         class_filter = body.get('classFilter')
         class_filter = ','.join(f'"{k.capitalize()}"' for k,v in filter(
             lambda x: x[1], class_filter.items()
