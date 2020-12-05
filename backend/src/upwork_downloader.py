@@ -9,6 +9,7 @@ from datetime import datetime
 # External imports
 import upwork
 from upwork.routers.jobs import search
+from upwork.routers import metadata
 import pandas as pd
 from pytz import timezone
 import requests
@@ -172,17 +173,17 @@ def add_records(records):
         print(e)
 
 
-def get_metadata(client, type):
+def get_metadata(client, requested):
     """
     https://developers.upwork.com/?lang=python#metadata
     """
-    if type == "categories":
+    if requested == "categories":
         return metadata.Api(client).get_categories_v2()
     
-    elif type == "skills":
+    elif requested == "skills":
         return metadata.Api(client).get_skills_v2()
     
-    elif type == "specialties":
+    elif requested == "specialties":
         # try client.get("/profiles/v1/metadata/specialties")
         return metadata.Api(client).get_specialties()
         

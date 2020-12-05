@@ -5,6 +5,7 @@ import sqlite3 as sql
 from pathlib import Path
 from time import time
 import pickle
+from itertools import chain
 
 # External imports
 import pytz
@@ -16,6 +17,8 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import QuantileTransformer
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import MultiLabelBinarizer
+from sklearn.compose import make_column_selector
 from sklearn.feature_extraction.text import TfidfVectorizer, TfidfTransformer
 from sklearn.decomposition import TruncatedSVD
 from sklearn.model_selection import GridSearchCV
@@ -27,6 +30,7 @@ from sklearn.metrics import recall_score, precision_score
 from sklearn.metrics import make_scorer
 from sklearn.model_selection import cross_validate
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import FunctionTransformer
 
 # Local imports
 from src.config import TIMESTAMP_FORMAT
@@ -62,13 +66,15 @@ def predict_unlabeled_jobs(
     if not retrain and (
             Path(MODEL_FILENAME).exists() and 
             Path('label_encoder.pkl').exists() and 
-            Path('report.pkl').exists()
+            Path('report.pkl').exists() and
+            Path('mlb.pkl').exists()
         ):
 
         print("Loading model...")
         model  = pickle.load(open(MODEL_FILENAME, 'rb'))
         le     = pickle.load(open('label_encoder.pkl', 'rb'))
         report = pickle.load(open('report.pkl', 'rb'))
+        mlb = pickle.load(open('mlb.pkl', 'rb'))
         print("Model loaded.")
 
     else:
@@ -78,6 +84,11 @@ def predict_unlabeled_jobs(
         )
 
         df = load_database_data(['Good', 'Bad', 'Maybe'])
+
+        # TODO: make this function a class Transformer so that it can be fit 
+        # and then used with the new received data
+        skills_ohe, mlb = transform_skills_to_ohe(df)
+        df = pd.concat([df, skills_ohe], axis=1)
 
         # Encode the output labels
         le = LabelEncoder()
@@ -112,15 +123,20 @@ def predict_unlabeled_jobs(
         print(report)
 
         print("Saving model and report...")
-        pickle.dump(model, open(MODEL_FILENAME, 'wb'))
-        pickle.dump(le, open('label_encoder.pkl', 'wb'))
+        pickle.dump(model,  open(MODEL_FILENAME, 'wb'))
         pickle.dump(report, open('report.pkl', 'wb'))
+        pickle.dump(le,     open('label_encoder.pkl', 'wb'))
+        pickle.dump(mlb,    open('mlb.pkl', 'wb'))
         print("Model and report saved.")
     
 
-    now = datetime.now(tz=pytz.timezone('America/Lima'))
-    window = timedelta(days=window_days)
+    now       = datetime.now(tz=pytz.timezone('America/Lima'))
+    window    = timedelta(days=window_days)
     unlabeled = unlabeled.loc[unlabeled['date_created'] >= now - window, :]
+    
+    # Transform the skills
+    unlabeled_skills_ohe = transform_skills_to_ohe(unlabeled, mlb=mlb)
+    unlabeled = pd.concat([unlabeled, unlabeled_skills_ohe], axis=1)
 
     if unlabeled.shape[0] == 0:
         return []
@@ -172,8 +188,8 @@ def predict_unlabeled_jobs(
 
     # Add columns with new information
     unlabeled = unlabeled.assign(**assignments)
+    
     unlabeled.sort_values(by=['score'], inplace=True, ascending=False)
-
     unlabeled_good  = unlabeled.loc[unlabeled.predicted == "Good", :].copy()
     unlabeled_maybe = unlabeled.loc[unlabeled.predicted == "Maybe", :].copy()
     unlabeled_bad   = unlabeled.loc[unlabeled.predicted == "Bad", :].copy()
@@ -269,10 +285,13 @@ def train_with_bag_of_words(X_train, y_train, scorer, search=True):
                     'category2',
                     'client.country'
                 ]),
+                ('oheskills', FunctionTransformer(identity), 
+                    make_column_selector("oheskill_")
+                )
             ], remainder='drop'
         )),
 
-        ('classifier', classifier),
+        ('classifier', classifier)
     ], verbose=True)
 
     if search:
@@ -287,8 +306,8 @@ def train_with_bag_of_words(X_train, y_train, scorer, search=True):
 
         grid = {
             'union__snippet_vec__svd__n_components' : np.arange(50, 301, 50),
-            'union__title_vec__svd__n_components' : np.arange(100, 301, 50),
-            'classifier__C' : lin_space,
+            'union__title_vec__svd__n_components'   : np.arange(100, 301, 50),
+            'classifier__C'                         : lin_space,
         }
 
         # With scoring="ovo", computes the average AUC of all possible pairwise 
@@ -437,3 +456,26 @@ def training_report(model, X_train, y_train, X_test, y_test, le, scorer):
     report = pd.DataFrame(report).round(2).T
 
     return report
+
+
+def transform_skills_to_ohe(df, column="skills", mlb=None):
+    """
+    Given that one column has multiple colon-separated values like:
+        "python;"
+    """
+    # There are some rows with None instead of a str
+    df.loc[df[column].isnull(), [column]] = ""
+    series_of_lists = df[column].str.replace("; ", ";").str.split(";")
+    prepended = series_of_lists.apply(lambda r: [f"oheskill_{c}" for c in r])
+    
+    if mlb is None:
+        # Get a list of unique skills
+        classes = list(set(chain(*prepended.tolist())))
+        mlb = MultiLabelBinarizer(classes=classes)
+        dummies = mlb.fit_transform(prepended)
+        return pd.DataFrame(dummies, columns=mlb.classes_), mlb
+    
+    else:
+        dummies = mlb.transform(prepended)
+        return pd.DataFrame(dummies, columns=mlb.classes_)
+    
