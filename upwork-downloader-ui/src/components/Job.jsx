@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import LabelSelector from "./LabelSelector";
 import Moment from "react-moment";
 import Truncate from "react-truncate";
-import ScoreDisplay from "./ScoreDisplay";
+import ScoreDisplay from "./ScoreDisplay/ScoreDisplay";
 
 const Job = ({ id, details, handler }) => {
   const [truncated, setTruncated] = useState(true);
@@ -59,11 +59,7 @@ const Job = ({ id, details, handler }) => {
           </div>
         </div>
 
-        <ScoreDisplay
-          Good={toPercentage(Good)}
-          Maybe={toPercentage(Maybe)}
-          Bad={toPercentage(Bad)}
-        />
+        {!Good ? "" : <ScoreDisplay Good={Good} Maybe={Maybe} Bad={Bad} />}
       </div>
       <div className="flex flex-col lg:flex-row flex-grow w-full px-4 pb-4 justify-end">
         <div className="lg:w-4/6 pt-8 pb-2 lg:py-4 break-words whitespace-pre-line text-justify">
