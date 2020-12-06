@@ -9,6 +9,7 @@ const Predicter = () => {
   const [predicted, setPredicted] = useState(null);
   const [fetching, setFetching] = useState(false);
   const [retrain, setRetrain] = useState(false);
+  const [search, setSearch] = useState(false);
   const [window, setWindow] = useState(1);
   const [toPredict, setToPredict] = useState({
     Good: true,
@@ -32,6 +33,7 @@ const Predicter = () => {
         retrain: retrain,
         window: window,
         to_predict: toPredict,
+        search: search
       }),
       headers: {
         "Content-Type": "application/json",
@@ -89,7 +91,10 @@ const Predicter = () => {
   };
 
   const handleRetrainChange = (event) => {
-    setRetrain(event.target.value);
+    setRetrain(!retrain);
+  };
+  const handleSearchChange = (event) => {
+    setSearch(!search);
   };
 
   const handleToPredictChange = (event) => {
@@ -129,48 +134,57 @@ const Predicter = () => {
               <div className="shadow sm:rounded-md">
                 <div className="grid grid-cols-2 md:grid-cols-3 md:grid-rows-1">
                   <div className="px-4 py-5 bg-white sm:p-6">
-                    <fieldset>
-                      <div className="flex flex-col items-center">
-                        <legend className="text-base font-medium text-gray-900">
-                          Retrain
-                        </legend>
-                        <p className="text-sm text-gray-500">
-                          Whether to retrain or not the model before predicting
-                        </p>
-                      </div>
-                      <div className="mt-4 space-y-4">
-                        <div className="flex items-center">
+                    <div className="flex flex-col items-center">
+                      <legend className="text-base font-medium text-gray-900">
+                        Traininig
+                      </legend>
+                      <p className="text-sm text-gray-500">Training options</p>
+                    </div>
+                    <fieldset className="mt-5 pb-4">
+                      <div className="flex items-start pb-4">
+                        <div className="flex items-center h-5">
                           <input
-                            id="retrain_true"
+                            id="retrain"
                             name="retrain"
-                            type="radio"
-                            className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300"
-                            value={true}
+                            type="checkbox"
+                            checked={retrain}
                             onChange={handleRetrainChange}
+                            className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
                           />
-                          <label
-                            htmlFor="retrain_true"
-                            className="ml-3 block text-sm font-medium text-gray-700"
-                          >
-                            True
-                          </label>
                         </div>
-                        <div className="flex items-center">
-                          <input
-                            defaultChecked
-                            id="retrain_false"
-                            name="retrain"
-                            type="radio"
-                            className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300"
-                            value={false}
-                            onChange={handleRetrainChange}
-                          />
+                        <div className="flex flex-col items-start ml-3 text-sm">
                           <label
-                            htmlFor="retrain_false"
-                            className="ml-3 block text-sm font-medium text-gray-700"
+                            htmlFor="retrain"
+                            className="font-medium text-gray-700"
                           >
-                            False
+                            Retrain
                           </label>
+                          <p className="text-gray-500 text-left">
+                            Retrain the model before prediction
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-start pb-4">
+                        <div className="flex items-center h-5">
+                          <input
+                            id="search"
+                            name="search"
+                            type="checkbox"
+                            checked={search}
+                            onChange={handleSearchChange}
+                            className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                          />
+                        </div>
+                        <div className="flex flex-col items-start ml-3 text-sm">
+                          <label
+                            htmlFor="search"
+                            className="font-medium text-gray-700"
+                          >
+                            Search
+                          </label>
+                          <p className="text-gray-500 text-left">
+                            Hyperparameters search
+                          </p>
                         </div>
                       </div>
                     </fieldset>
@@ -237,13 +251,13 @@ const Predicter = () => {
                     <fieldset>
                       <div className="flex flex-col items-center">
                         <legend className="text-base font-medium text-gray-900">
-                          Classes to predict
+                          Prediction
                         </legend>
                         <p className="text-sm text-gray-500">
                           Which kind of predicted jobs to return
                         </p>
                       </div>
-                      <div className="mt-4 space-y-4">
+                      <div className="mt-5 space-y-4">
                         <div className="flex items-start">
                           <div className="flex items-center h-5">
                             <input
