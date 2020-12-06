@@ -47,7 +47,8 @@ def predict_unlabeled_jobs(
     retrain     = False,
     n_jobs      = 10,
     window_days = 2,
-    to_predict  = { 'Good': True, 'Maybe': True, 'Bad': False }
+    to_predict  = { 'Good': True, 'Maybe': True, 'Bad': False },
+    search      = False
     ):
     """
     Args:
@@ -97,11 +98,11 @@ def predict_unlabeled_jobs(
         # TODO: pass search as a parameter directly from the UI
         
         model = train_with_bag_of_words(
-            X_train, y_train, scorer, search=False
+            X_train, y_train, scorer, search=search
         )
 
         # model = train_bag_of_quantized_word_embeddings(
-        #     X_train, y_train, scorer, search=False
+        #     X_train, y_train, scorer, search=search
         # )
 
         print("Creating performance report...")
@@ -295,7 +296,7 @@ def train_with_bag_of_words(X_train, y_train, scorer, search=True):
             n_jobs             = 7, 
             return_train_score = True, 
             refit              = True,
-            verbose            = 0,
+            verbose            = True,
             cv                 = StratifiedKFold(n_splits=3),
             scoring            = scorer,
         )
