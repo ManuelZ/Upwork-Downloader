@@ -153,21 +153,14 @@ def predict_unlabeled_jobs(
     # [2] https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html
     # [3] https://www.econstor.eu/bitstream/10419/22569/1/tr56-04.pdf
     
-    dist_to_hyperplanes = np.abs(np.array(model.decision_function(unlabeled)))
-    
-    pseudo_probs = np.exp(
-        dist_to_hyperplanes) / np.sum(np.exp(dist_to_hyperplanes
-    ), axis=1).reshape(-1,1) # softmax after the voting
-
-    # Weights assigned to the features (coefficients in the primal problem)
-    # weights = model.best_estimator_.named_steps['classifier'].coef_
-    
+    score = np.array(model.decision_function(unlabeled)) # distance to hyperplanes
+  
     assignments = {
         "predicted"    : predicted_class,
-        "score"        : pseudo_probs.max(axis=1),
-        le.classes_[0] : pseudo_probs[:,0], # e.g. "Good" or "Bad" or "Maybe"
-        le.classes_[1] : pseudo_probs[:,1],
-        le.classes_[2] : pseudo_probs[:,2]
+        "score"        : score.max(axis=1),
+        le.classes_[0] : score[:,0], # e.g. "Good" or "Bad" or "Maybe"
+        le.classes_[1] : score[:,1],
+        le.classes_[2] : score[:,2]
     }
 
     # Add columns with new information
@@ -221,13 +214,6 @@ def train_with_bag_of_words(X_train, y_train, scorer, search=True):
         search : Whether to search for the best hyperparameters
     """
 
-    classifier = svm.SVC(
-        C                       = 7.5,
-        kernel                  = 'linear', 
-        decision_function_shape = 'ovr',
-        class_weight            = 'balanced'
-    )
-
     pipeline = Pipeline([
         ('union', ColumnTransformer(
             [
@@ -246,7 +232,7 @@ def train_with_bag_of_words(X_train, y_train, scorer, search=True):
                         preprocessor = None,
                         lowercase    = False,
                         use_idf      = True,
-                        ngram_range  = (1,2)
+                        ngram_range  = (2,2)
                     )),
                     ('svd', TruncatedSVD(n_components=150)),
                 ]), 'title'),
@@ -272,23 +258,30 @@ def train_with_bag_of_words(X_train, y_train, scorer, search=True):
             ], remainder='drop'
         )),
 
-        ('classifier', classifier),
+        ('classifier', svm.SVC(
+            C                       = 7.5,
+            kernel                  = 'linear', 
+            decision_function_shape = 'ovr',
+            class_weight            = 'balanced'
+        )),
     ], verbose=True)
 
     if search:
 
         log_space = gen_parameters_from_log_space(
-            low_value  = 2,
-            high_value = 10,
+            low_value  = 1,
+            high_value = 20,
             n_samples  = 10
         )
 
-        lin_space = np.range(2, 10, 2, dtype=np.int)
+        lin_space = np.arange(2, 10, 2, dtype=np.int)
 
         grid = {
-            'union__snippet_vec__svd__n_components' : np.arange(50, 301, 50),
-            'union__title_vec__svd__n_components' : np.arange(100, 301, 50),
-            'classifier__C' : lin_space,
+            'union__title_vec__tfidf__ngram_range'   : [(1,2), (2,2)],
+            'union__snippet_vec__tfidf__ngram_range' : [(1,2), (2,2)],
+            'union__snippet_vec__svd__n_components'  : np.arange(50, 301, 50),
+            'union__title_vec__svd__n_components'    : np.arange(100, 301, 50),
+            'classifier__C'                          : lin_space,
         }
 
         # With scoring="ovo", computes the average AUC of all possible pairwise 
@@ -299,10 +292,10 @@ def train_with_bag_of_words(X_train, y_train, scorer, search=True):
         searcher = GridSearchCV(
             estimator          = pipeline, 
             param_grid         = grid,
-            n_jobs             = 4, 
+            n_jobs             = 7, 
             return_train_score = True, 
             refit              = True,
-            verbose            = 1,
+            verbose            = 0,
             cv                 = StratifiedKFold(n_splits=3),
             scoring            = scorer,
         )
