@@ -36,7 +36,6 @@ const LabelSelector = ({ id, clickHandler, selectedOption }) => {
           <span>{class1Value}</span>
         </label>
       </>
-      
 
       <>
         <input

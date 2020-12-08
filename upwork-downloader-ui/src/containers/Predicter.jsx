@@ -332,7 +332,7 @@ const Predicter = () => {
                     }
                     ref={buttonRef}
                   >
-                    {"Predict good jobs"}
+                    {"Predict"}
                   </button>
                 </div>
               </div>
