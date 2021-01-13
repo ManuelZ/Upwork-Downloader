@@ -1,7 +1,4 @@
 # Built-in imports
-from os.path import exists, isfile
-import re
-import os
 import time
 import sqlite3 as sql
 from datetime import datetime
@@ -9,14 +6,11 @@ from datetime import datetime
 # External imports
 import upwork
 from upwork.routers.jobs import search
-import pandas as pd
-from pytz import timezone
 import requests
 
 # Local imports
 from src import config
 from src.config import SEARCH_TERMS
-from src.utils import to_unicode
 from src.exceptions import CredentialsNotFoundError
 
 
@@ -130,7 +124,7 @@ def search_jobs(client, terms):
 
 def add_records(records):
     """
-    Insert records in sqlite3 database.
+    Insert records in the SQLite3 database.
 
     Args:
     data: a list of tuples

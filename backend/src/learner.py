@@ -20,7 +20,9 @@ from sklearn.feature_extraction.text import TfidfVectorizer, TfidfTransformer
 from sklearn.decomposition import TruncatedSVD
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import StratifiedKFold
-from sklearn.pipeline import Pipeline
+#from sklearn.pipeline import Pipeline
+from imblearn.pipeline import Pipeline
+from imblearn.over_sampling import RandomOverSampler, SMOTE, ADASYN
 from sklearn.compose import ColumnTransformer
 from sklearn.metrics import classification_report
 from sklearn.metrics import recall_score, precision_score
@@ -259,11 +261,13 @@ def train_with_bag_of_words(X_train, y_train, scorer, search=True):
             ], remainder='drop'
         )),
 
+        #('oversampling', ADASYN(random_state=42)),
+
         ('classifier', svm.SVC(
             C                       = 7.5,
             kernel                  = 'linear', 
             decision_function_shape = 'ovr',
-            class_weight            = 'balanced'
+            #class_weight            = 'balanced' # better without 'balanced'
         )),
     ], verbose=True)
 
