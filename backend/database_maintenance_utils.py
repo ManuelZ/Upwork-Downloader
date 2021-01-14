@@ -131,17 +131,13 @@ def recreate_db():
     con.close()
 
 
-
-
-
-def update_db():
+def update_db(client):
     """
     - Retrieve all the labeled jobs from the database
     - Call the profile api for each job and retrieve the features of interest
     - Update the DB with the new features
     """
 
-    client = get_authenticated_client()
     df = load_database_data(filter=['Good', 'Bad', 'Maybe'])
 
     modifications = {
@@ -197,24 +193,7 @@ def update_db():
 
 
 if __name__ == "__main__":
-
-    update_db()
-
-    # try:
-    #     api_key, api_key_secret = load_api_key()
-    
-    # except CredentialsNotFoundError as e:
-    #     import os
-
-    # access_token, access_token_secret = load_access_token()
-    
-    # client_config = upwork.Config({
-    #     'consumer_key': api_key,
-    #     'consumer_secret': api_key_secret,
-    #     'access_token': access_token,
-    #     'access_token_secret': access_token_secret
-    # })
-
-    # client = upwork.Client(client_config)
+    client = get_authenticated_client()
+    update_db(client)
     # ids = load_ids_from_file("../data/ids.txt")
     # get_jobs_by_id(client, ids)
