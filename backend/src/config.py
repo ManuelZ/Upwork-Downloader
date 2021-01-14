@@ -11,7 +11,8 @@ MODEL_FILENAME = 'model.pkl'
 
 TABLE_NAME = 'jobs'
 
-# Job fields returned byt the "Search for jobs" API
+# List of Job fields returned byt the "Search for jobs" API + some additional new ones 
+# from the "Get job profile" API.
 FIELDS_NAMES = [
     'id',                                 # 'id' must be the first field
     'title',                              # Job title
@@ -86,25 +87,32 @@ JOB_FIELDS = [
 ]
 
 SEARCH_TERMS = [
-    'machine learning',
-    'python',
-    'artificial intelligence',
-    'opencv',
-    'time series',
-    'computer vision',
-    'optimization algorithm',
-    'raspberry pi',
-    'arduino',
-    'supervised learning',
-    "product matching",
-    "ml model",
-    "ml",
-    "ai",
-    "segmentation",
-    "path",
-    "reinforcement learning",
-    "data science",
-    "aws batch"
+        'machine learning',
+        'python',
+        'artificial intelligence',
+        'opencv',
+        'time series',
+        'computer vision',
+        'optimization algorithm',
+        'raspberry pi',
+        'arduino',
+        'supervised learning',
+        'product matching',
+        'ml model',
+        'ml',
+        'ai',
+        'segmentation',
+        'path planning',
+        'reinforcement learning',
+        'data science',
+        'aws batch',
+        'visual search',
+        'similarity',
+        'document similarity',
+        'image similarity',
+        'Robotics Engineer',
+        'AWS RoboMaker Robotics Engineer',
+        'AWS Robotics Developer'
     ]
 
 MAX_ENTRIES_PER_TERM = 20
@@ -112,3 +120,15 @@ ENTRIES_PER_RESULT_PAGE = 100 # Do not increase more than 100
 DAYS_BACK_TO_SEARCH = 3
 
 TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M:%S%z"
+
+# Size of the sample
+SILHOUETTE_SAMPLE_SIZE = 5000
+
+# Number of repetitions of the Silhouette evaluation
+SILHOUETTE_N_SAMPLES = 5
+
+# Defines when the Silhouette score isn't improving anymore
+SILHOUETTE_TOL = 0.01
+
+# Kmeans dataset pases
+MAX_FAILED_PASSES = 2

@@ -1,7 +1,4 @@
 # Built-in imports
-from os.path import exists, isfile
-import re
-import os
 import time
 import sqlite3 as sql
 from datetime import datetime
@@ -312,7 +309,7 @@ def get_jobs_by_id(client, ids):
 
 def insert_records_into_db(records):
     """
-    Insert records in sqlite3 database 
+    Insert records in the SQLite3 database.
 
     Args:
         data: a list of tuples
@@ -354,10 +351,25 @@ def insert_records_into_db(records):
         print(e)
 
 
+def get_metadata(client, type):
+    """
+    https://developers.upwork.com/?lang=python#metadata
+    """
+    if type == "categories":
+        return metadata.Api(client).get_categories_v2()
+    
+    elif type == "skills":
+        return metadata.Api(client).get_skills_v2()
+    
+    elif type == "specialties":
+        # try client.get("/profiles/v1/metadata/specialties")
+        return metadata.Api(client).get_specialties()
+
+
 def update_records(modifications):
     """
     Update multiple columns of multiple rows with new values.
-
+    
     Args:
         modifications: a dict with keys "columns", "ids" and "values".
 
