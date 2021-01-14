@@ -61,14 +61,16 @@ def predict():
     body = request.get_json()
 
     classes_to_predict = body.get('to_predict')
-    retrain = True if body.get('retrain') == "true" else False
+    retrain = body.get('retrain', False)
+    search = body.get('search', False)
     window_days = body.get('window', 2)
     
     jobs, report = predict_unlabeled_jobs(
         window_days = window_days,
         retrain     = retrain,
         n_jobs      = 20,
-        to_predict  = classes_to_predict
+        to_predict  = classes_to_predict,
+        search      = search
     )
 
     jobs = [job.to_dict() for job in jobs]

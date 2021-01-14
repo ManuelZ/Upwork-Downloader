@@ -11,6 +11,7 @@ MODEL_FILENAME = 'model.pkl'
 
 TABLE_NAME = 'jobs'
 
+# Fields used in the `add_records` function when inserting data into the DB
 # 'id' must be the first field
 FIELDS_NAMES = [
   'id',
@@ -63,15 +64,22 @@ SEARCH_TERMS = [
         'raspberry pi',
         'arduino',
         'supervised learning',
-        "product matching",
-        "ml model",
-        "ml",
-        "ai",
-        "segmentation",
-        "path",
-        "reinforcement learning",
-        "data science",
-        "aws batch"
+        'product matching',
+        'ml model',
+        'ml',
+        'ai',
+        'segmentation',
+        'path planning',
+        'reinforcement learning',
+        'data science',
+        'aws batch',
+        'visual search',
+        'similarity',
+        'document similarity',
+        'image similarity',
+        'Robotics Engineer',
+        'AWS RoboMaker Robotics Engineer',
+        'AWS Robotics Developer'
     ]
 
 MAX_ENTRIES_PER_TERM = 20

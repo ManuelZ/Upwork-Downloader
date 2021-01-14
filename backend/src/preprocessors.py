@@ -20,7 +20,7 @@ from src.config import MAX_FAILED_PASSES
 
 
 # nlp= English()
-nlp = spacy.load("en_core_web_lg", disable=['tagger', 'parser', 'ner'])
+nlp = spacy.load("en_core_web_sm", disable=['tagger', 'parser', 'ner'])
 
 class SpacyPreprocessor(BaseEstimator, TransformerMixin):
     """
