@@ -13,8 +13,6 @@ import numpy as np
 from sklearn import svm
 import category_encoders as ce
 from sklearn.preprocessing import StandardScaler
-from sklearn.preprocessing import QuantileTransformer
-from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import LabelEncoder
 from sklearn.feature_extraction.text import TfidfVectorizer, TfidfTransformer
 from sklearn.decomposition import TruncatedSVD
@@ -45,12 +43,56 @@ pd.set_option('display.max_columns', 5000)
 pd.set_option('display.max_colwidth', 5000)
 
 
+def train_model(search=False):
+    """
+    """
+
+    scorer = make_scorer(
+        score_func = precision_score,
+        average    = "macro" 
+    )
+
+    df = load_database_data(['Good', 'Bad', 'Maybe'])
+
+    # Encode the output labels
+    le = LabelEncoder()
+    df.loc[:,'label'] = le.fit_transform(df.loc[:,'label'].values.ravel())
+
+    y = df.loc[:, 'label'].copy()
+    X = df.drop(['label'], axis=1).copy()
+
+    X_train, X_test, y_train, y_test = \
+        train_test_split(X, y, test_size=0.3, random_state=42, stratify=y)
+    
+    print(
+        f"Loaded {X_train.shape[0]} training examples and "
+        f"{X_test.shape[0]} validation examples."
+    )
+    
+    model = train_with_bag_of_words(X_train, y_train, scorer, search=search)
+
+    # model = train_bag_of_quantized_word_embeddings(
+    #     X_train, y_train, scorer, search=search
+    # )
+
+    print("Creating performance report...")
+    report = training_report(
+        model, X_train, y_train, X_test, y_test, le, scorer
+    )
+
+    print(report)
+
+    print("Saving model and report...")
+    pickle.dump(model, open(MODEL_FILENAME, 'wb'))
+    pickle.dump(le, open('label_encoder.pkl', 'wb'))
+    pickle.dump(report, open('report.pkl', 'wb'))
+    print("Model and report saved.")
+
+
 def predict_unlabeled_jobs(
-    retrain     = False,
     n_jobs      = 10,
     window_days = 2,
     to_predict  = { 'Good': True, 'Maybe': True, 'Bad': False },
-    search      = False
     ):
     """
     Args:
@@ -62,64 +104,19 @@ def predict_unlabeled_jobs(
 
     unlabeled = load_unlabeled_data()
 
-    if not retrain and (
-            Path(MODEL_FILENAME).exists() and 
-            Path('label_encoder.pkl').exists() and 
-            Path('report.pkl').exists()
-        ):
-
-        print("Loading model...")
-        model  = pickle.load(open(MODEL_FILENAME, 'rb'))
-        le     = pickle.load(open('label_encoder.pkl', 'rb'))
-        report = pickle.load(open('report.pkl', 'rb'))
-        print("Model loaded.")
-
-    else:
-        scorer = make_scorer(
-            score_func = precision_score,
-            average    = "macro" 
-        )
-
-        df = load_database_data(['Good', 'Bad', 'Maybe'])
-
-        # Encode the output labels
-        le = LabelEncoder()
-        df.loc[:,'label'] = le.fit_transform(df.loc[:,'label'].values.ravel())
-
-        y = df.loc[:, 'label'].copy()
-        X = df.drop(['label'], axis=1).copy()
-
-        X_train, X_test, y_train, y_test = \
-            train_test_split(X, y, test_size=0.3, random_state=42, stratify=y)
+    if not (
+        Path(MODEL_FILENAME).exists() and 
+        Path('label_encoder.pkl').exists() and 
+        Path('report.pkl').exists()
+    ):
         
-        print(
-            f"Loaded {X_train.shape[0]} training examples and "
-            f"{X_test.shape[0]} validation examples."
-        )
-
-        # TODO: pass search as a parameter directly from the UI
-        
-        model = train_with_bag_of_words(
-            X_train, y_train, scorer, search=search
-        )
-
-        # model = train_bag_of_quantized_word_embeddings(
-        #     X_train, y_train, scorer, search=search
-        # )
-
-        print("Creating performance report...")
-        report = training_report(
-            model, X_train, y_train, X_test, y_test, le, scorer
-        )
-
-        print(report)
-
-        print("Saving model and report...")
-        pickle.dump(model, open(MODEL_FILENAME, 'wb'))
-        pickle.dump(le, open('label_encoder.pkl', 'wb'))
-        pickle.dump(report, open('report.pkl', 'wb'))
-        print("Model and report saved.")
+        train_model()
     
+    print("Loading model...")
+    model  = pickle.load(open(MODEL_FILENAME, 'rb'))
+    le     = pickle.load(open('label_encoder.pkl', 'rb'))
+    report = pickle.load(open('report.pkl', 'rb'))
+    print("Model loaded.")
 
     now = datetime.now(tz=pytz.timezone('America/Lima'))
     window = timedelta(days=window_days)
@@ -264,7 +261,7 @@ def train_with_bag_of_words(X_train, y_train, scorer, search=True):
         #('oversampling', ADASYN(random_state=42)),
 
         ('classifier', svm.SVC(
-            C                       = 7.5,
+            C                       = 5.1,
             kernel                  = 'linear', 
             decision_function_shape = 'ovr',
             #class_weight            = 'balanced' # better without 'balanced'
@@ -274,19 +271,19 @@ def train_with_bag_of_words(X_train, y_train, scorer, search=True):
     if search:
 
         log_space = gen_parameters_from_log_space(
-            low_value  = 1,
-            high_value = 20,
+            low_value  = 5,
+            high_value = 8,
             n_samples  = 10
         )
 
-        lin_space = np.arange(2, 10, 2, dtype=np.int)
+        lin_space = np.arange(2, 8, 2, dtype=np.int)
 
         grid = {
-            'union__title_vec__tfidf__ngram_range'   : [(1,2), (2,2)],
-            'union__snippet_vec__tfidf__ngram_range' : [(1,2), (2,2)],
-            'union__snippet_vec__svd__n_components'  : np.arange(50, 301, 50),
-            'union__title_vec__svd__n_components'    : np.arange(100, 301, 50),
-            'classifier__C'                          : lin_space,
+            # 'union__title_vec__tfidf__ngram_range'   : [(1,2), (2,2)],
+            # 'union__snippet_vec__tfidf__ngram_range' : [(1,2), (2,2)],
+            # 'union__snippet_vec__svd__n_components'  : np.arange(50, 301, 50),
+            # 'union__title_vec__svd__n_components'    : np.arange(100, 301, 50),
+            'classifier__C'                          : log_space,
         }
 
         # With scoring="ovo", computes the average AUC of all possible pairwise 
@@ -297,7 +294,7 @@ def train_with_bag_of_words(X_train, y_train, scorer, search=True):
         searcher = GridSearchCV(
             estimator          = pipeline, 
             param_grid         = grid,
-            n_jobs             = 7, 
+            n_jobs             = 4, 
             return_train_score = True, 
             refit              = True,
             verbose            = True,
@@ -325,7 +322,7 @@ def train_bag_of_quantized_word_embeddings(
         # Use ColumnTransformer to combine the features from subject and body
         ('union', ColumnTransformer(
             [
-                ('scaler', MinMaxScaler(), [
+                ('scaler', StandardScaler(), [
                     'budget',
                     'client.feedback',
                     'client.reviews_count',

@@ -21,6 +21,7 @@ from src.upwork_downloader import load_access_token
 from src.upwork_downloader import search_jobs
 from src.upwork_downloader import add_records
 from src.learner import predict_unlabeled_jobs
+from src.learner import train_model
 from src.exceptions import CredentialsNotFoundError
 
 
@@ -55,22 +56,31 @@ def close_connection(exception):
         conn.close()
 
 
+@app.route('/train', methods=['POST'])
+def train():
+    body = request.get_json()
+    search = body.get('search', False)
+    report = train_model(search=search)
+    
+    return jsonify({'report':report.to_string()})
+
+
 @app.route('/predict', methods=['POST'])
 def predict():
     
     body = request.get_json()
-
     classes_to_predict = body.get('to_predict')
+    window_days = body.get('window', 2)
     retrain = body.get('retrain', False)
     search = body.get('search', False)
-    window_days = body.get('window', 2)
+    
+    if retrain:
+        train_model(search)
     
     jobs, report = predict_unlabeled_jobs(
         window_days = window_days,
-        retrain     = retrain,
         n_jobs      = 20,
         to_predict  = classes_to_predict,
-        search      = search
     )
 
     jobs = [job.to_dict() for job in jobs]
