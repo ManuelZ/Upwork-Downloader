@@ -138,7 +138,7 @@ def predict_unlabeled_jobs(
     unlabeled = unlabeled.loc[unlabeled['date_created'] >= now - window, :]
     
     # Transform the skills
-    unlabeled_skills_ohe = transform_skills_to_ohe(unlabeled, mlb=mlb)
+    unlabeled_skills_ohe, mlb = transform_skills_to_ohe(unlabeled, mlb=mlb)
     unlabeled = pd.concat([unlabeled, unlabeled_skills_ohe], axis=1)
 
     if unlabeled.shape[0] == 0:
@@ -458,8 +458,12 @@ def training_report(model, X_train, y_train, X_test, y_test, le, scorer):
 
 def transform_skills_to_ohe(df, column="skills", mlb=None):
     """
-    Given that one column has multiple colon-separated values like:
-        "python;"
+    Given that one column has multiple colon-separated values like "python;", 
+    return a dataframe with the one-hot-encoded skills.
+    
+    Return tuple of:
+        - Dataframe of one-hot-encoded skills
+        - Fitted MultiLabelBinarizer
     """
     # There are some rows with None instead of a str
     df.loc[df[column].isnull(), [column]] = ""
@@ -475,5 +479,5 @@ def transform_skills_to_ohe(df, column="skills", mlb=None):
     
     else:
         dummies = mlb.transform(prepended)
-        return pd.DataFrame(dummies, columns=mlb.classes_)
+        return pd.DataFrame(dummies, columns=mlb.classes_), mlb
     
