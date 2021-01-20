@@ -12,5 +12,8 @@
       margin: 0;
       -moz-appearance: textfield;
     }
+    .w-26 {
+      width: 6.5rem;
+    }
   }
 }

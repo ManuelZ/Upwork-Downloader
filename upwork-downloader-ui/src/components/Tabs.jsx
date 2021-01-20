@@ -1,6 +1,7 @@
 import React from "react";
 import ManualClassifier from "../containers/ManualClassifier";
 import Predicter from "../containers/Predicter";
+import Trainer from "../containers/Trainer";
 import { Routes, Route, Link, useLocation } from "react-router-dom";
 
 const Tabs = (props) => {
@@ -23,6 +24,14 @@ const Tabs = (props) => {
             Manual Classifier
           </Link>
         </div>
+        <div className={pathname === "/trainer" ? "-mb-px mr-1" : "mr-1"}>
+          <Link
+            to="/trainer"
+            className={pathname === "/trainer" ? activeTabClass : tabClass}
+          >
+            Trainer
+          </Link>
+        </div>
         <div className={pathname === "/predicter" ? "-mb-px mr-1" : "mr-1"}>
           <Link
             to="/predicter"
@@ -36,6 +45,7 @@ const Tabs = (props) => {
       <div className="container mx-auto">
         <Routes>
           <Route path="/classifier" element={<ManualClassifier />} />
+          <Route path="/trainer" element={<Trainer />} />
           <Route path="/predicter" element={<Predicter />} />
         </Routes>
       </div>

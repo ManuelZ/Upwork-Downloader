@@ -23,12 +23,12 @@ This project consists of:
 ## Setup Instructions
 
 1. Clone this repository.
+    git clone https://github.com/ManuelZ/Upwork-Downloader
 
-2. Request an API key from Upwork at https://www.upwork.com/services/api/apply.
+2. (Request an API key)[https://www.upwork.com/services/api/apply] from Upwork
    You can see your current available api keys in https://www.upwork.com/services/api/keys
 
-3. Create a file `./api_key.secret`, with the following contents:
-
+3. Create a file `./api_key.secret` in your local machine, with the following contents:
     PUBLIC API KEY PROVIDED BY UPWORK
     SECRET KEY PROVIDED BY UPWORK
 
@@ -61,7 +61,7 @@ Allow Upwork Users to search for and browse Upwork job postings with a customize
 - TailwindCSS
 - Docker
 
-## Raspberry Pi instructions
+## Setup instructions
 
 Download a Raspberry Pi image and burn it to a microSD card:
 [Raspberry Pi OS](https://www.raspberrypi.org/downloads/raspberry-pi-os/)
@@ -78,13 +78,16 @@ Login into the Raspberry
 
 The default password is "raspberry"
 
-### Configure the Wifi
+### Configure the Wifi and change the local time/change timezone
     sudo raspi-config
 
 ### Setup a static ip
     sudo nano /etc/dhcpcd.conf
 
 Uncomment and modify the following fields: `interface`, `ip_address`, `routers`
+- For 'interface' set wlan0
+- For 'ip_address' put 192.168.1.10
+- For 'routers' put 192.168.1.1
 
 ### Reload the connection
     sudo wpa_cli -i wlan0 reconfigure
@@ -96,66 +99,102 @@ Uncomment and modify the following fields: `interface`, `ip_address`, `routers`
     sudo apt-get update && sudo apt-get -y upgrade
 
 ### Install git
-    sudo apt-get install -y git
+    sudo apt-get install -y --no-install-recommends git
 
 ### Clean the apt cache
     sudo apt-get clean
 
-### Change local time/change timezone
-   sudo raspi-config
+### Generate a new SSH key (do not set a passphrase):
+    ssh-keygen -t ed25519 -C "your_email@example.com"
 
-<!-- ### Install Pip and Numpy
-    sudo apt install python3-pip python3-numpy -->
+### Start the ssh agent:
+    eval "$(ssh-agent -s)"
+   
+### Add the SSH private key to the ssh-agent:
+    ssh-add ~/.ssh/id_ed25519
+
+### Copy the contents from here
+    cat ~/.ssh/id_ed25519.pub
+
+### Use the copied contents to the ssh key to Github
+    https://docs.github.com/en/free-pro-team@latest/articles/adding-a-new-ssh-key-to-your-github-account
 
 ### Clone repo
     git clone https://github.com/ManuelZ/Upwork-Downloader
 
+### Change directory into the project
+    cd ~/Upwork-Downloader
+### Add a ssh remote
+    git remote set-url origin git@github.com:ManuelZ/Upwork-Downloader.git
 ### Add your Upwork API key (run this from your local machine)
     scp api_key.secret pi@raspberrypi.local:/home/pi/Upwork-Downloader/
 
-<!-- ### Install requirements
-     python3 -m pip install -r requirements.txt -->
 
-<!-- ### Prepare nltk requirements
-    python3 -c "import nltk; nltk.download('stopwords')"
 
-### Add PYTHONPATH
-    echo "PYTHONPATH=~/Upwork-Downloader:$PYTHONPATH" >> ~/.bashrc -->
-    
-## Install Docker
-
-[Official instructions](https://docs.docker.com/engine/install/debian/#install-using-the-convenience-script)
-
+### Install Docker (may take some time)
     curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh
+
+[Official Docker installation instructions](https://docs.docker.com/engine/install/debian/#install-using-the-convenience-script)
+
+### Allow your user to fully use Docker
     sudo usermod -aG docker pi
 
-### Change directory
+### Restart the docker service
+    sudo /etc/init.d/docker stop
+    sudo /etc/init.d/docker start
+
+### Setup DockerHub 
+Create an account in DockerHub, create a personal private repository and create an access token.
+ - https://docs.docker.com/docker-hub/access-tokens/#create-an-access-token
+
+### Login into DockerHub
+    docker login --username mclzc --password YOUR_TOKEN
+
+## Compilation instructions 
+### Change CONF_SWAPSIZE to 2048
+    sudo nano /etc/dphys-swapfile
+
+### Restart the swap service
+    sudo /etc/init.d/dphys-swapfile stop
+    sudo /etc/init.d/dphys-swapfile start
+
+REMEMBER TO GET IT BACK TO 100MB AFTER COMPILING OR YOUR MICROSD WILL DIE EARLY
+
+### Change directory into the project
     cd ~/Upwork-Downloader
-
-### Build the image
-    docker image build -f ./Dockerfile -t ud_image .
-
-### Create the container
-    docker create -it --name ud_container --volume="/home/pi/:/code" ud_image
-
-### Run the container
-    docker run -p 5000:5000 ud_image
-
-
-
+### Run the compilation
+    bash build_and_run.sh
 
 <!-- 
-Once inside, generate a new SSH key:
+### Build the image
+    sudo docker image build -f ./Docker/Dockerfile -t ud_image .
 
-    ssh-keygen -t ed25519 -C "your_email@example.com"
+### Create the container
+    sudo docker create -it --name ud_container --volume="/home/pi/:/code" ud_image
+
+### Run the container
+    sudo docker run -p 5000:5000 ud_image
+
+TOKEN: 6a9a185c-40a0-47bf-bf52-0ef15b0b7f4c
+docker push mclzc/private-repo:latest
 
 
-Start the ssh agent:
-    eval "$(ssh-agent -s)"
-    Agent pid 1121
-   
-Add the SSH private key to the ssh-agent:
-    ssh-add ~/.ssh/id_ed25519
+THE FOLLOWING IS NOT REALLY A GOOD IDEA
 
-[Add the generated key to your the Github account](https://docs.github.com/en/free-pro-team@latest/articles/adding-a-new-ssh-key-to-your-github-account)
+docker buildx create --name mybuilder
+docker buildx use mybuilder
+docker buildx inspect --bootstrap
+docker buildx build --push --platform linux/arm/v7 --tag mclzc/ud_image -f ./Docker/Dockerfile .
+ 
+
+
+# Run "cat /proc/cpuinfo" to obtain information about your exact model
+# https://elinux.org/RPi_HardwareHistory
+
+# During the first push of a new branch
+git push -u origin hourly_rate
+
+
  -->
+
+

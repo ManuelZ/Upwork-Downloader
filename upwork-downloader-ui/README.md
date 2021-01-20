@@ -1,14 +1,19 @@
-## Instructions to run the User Interface
+# Instructions
 
-### Setup
+## Install the required packages
 
 ```
 npm install
 ```
 
-### Usage
+## To run the Python backend
 
-To run the Electron app:
+```
+python backend.py
+```
+The backend has all the needed endpoints to access the underlying data stored in Sqlite3. It also serves the user interface in "/", so it can be accessed at localhost:3000.
+
+## To run the Electron app
 
 ```
 npm run both
@@ -16,13 +21,7 @@ npm run both
 
 The above command will run `npm start` and `npm run electron` concurrently. After this, an electron app will open up.
 
-- There is no need to navigate to localhost:3000 since this is not a web app, but
-  an electron app.
+- When accessing the user interface with electron, there is no need to navigate to localhost:3000.
 
-To run the Python backend:
-
-```
-python backend.py
-```
 
 The above command will run a Flask server and will handle the connection with a local Sqlite3 database.

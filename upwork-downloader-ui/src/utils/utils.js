@@ -13,15 +13,25 @@ export const sortByDate = (a, b) => {
     return -1;
   } else if ((a.predicted === "Good") & (b.predicted === "Maybe")) {
     return -1;
+  } else if ((a.predicted === "Good") & (b.predicted === "Irrelevant")) {
+    return -1;
   } else if ((a.predicted === "Maybe") & (b.predicted === "Good")) {
     return 1;
   } else if ((a.predicted === "Maybe") & (b.predicted === "Bad")) {
     return -1;
-  } else if ((a.predicted === "Maybe") & (b.predicted === "Bad")) {
+  } else if ((a.predicted === "Maybe") & (b.predicted === "Irrelevant")) {
     return -1;
   } else if ((a.predicted === "Bad") & (b.predicted === "Good")) {
     return 1;
   } else if ((a.predicted === "Bad") & (b.predicted === "Maybe")) {
+    return 1;
+  } else if ((a.predicted === "Bad") & (b.predicted === "Irrelevant")) {
+    return -1;
+  } else if ((a.predicted === "Irrelevant") & (b.predicted === "Good")) {
+    return 1;
+  } else if ((a.predicted === "Irrelevant") & (b.predicted === "Maybe")) {
+    return 1;
+  } else if ((a.predicted === "Irrelevant") & (b.predicted === "Bad")) {
     return 1;
   }
 };

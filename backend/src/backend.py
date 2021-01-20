@@ -56,13 +56,60 @@ def close_connection(exception):
         conn.close()
 
 
+@app.route('/search', methods=['GET'])
+def search():
+    text = request.args.get('text')
+    # text = text.split(' ')
+    active_classes = request.args.get('classes').split(',')
+    active_classes = ','.join(f'"{c}"' for c in active_classes)
+    
+    try:
+        cur = get_conn().cursor()        
+        search_query = f'''
+            SELECT 
+                *
+            FROM 
+                {TABLE_NAME} 
+            WHERE 
+                (title LIKE '%{text}%'
+            OR
+                snippet LIKE '%{text}%'
+            OR
+                id LIKE '%{text}%')
+            AND
+                label IN ({active_classes}) 
+            COLLATE NOCASE 
+            ORDER BY 
+                strftime("%Y-%m-%dT%H:%M:%SZ", date_created) DESC 
+            
+        '''
+
+        cur.execute(search_query)
+        rows = cur.fetchall()
+        data = [dict(row) for row in rows]
+        data = sorted(data, key=lambda k: k['date_created'])
+        msg = 'Success'
+    
+    except Exception as e:
+        msg = f"Error in SELECT operation: {e}"
+        print(msg)
+        data = ''
+    
+    finally:
+        return jsonify({'msg':msg, 'data':data})
+
+
 @app.route('/train', methods=['POST'])
 def train():
     body = request.get_json()
-    search = body.get('search', False)
-    report = train_model(search=search)
+    search      = body.get('search', False)
+    classifier  = body.get('classifier')
+    scorer_name = body.get('scorer')
+    results = train_model(classifier=classifier, search=search, scorer_name='f1')
     
-    return jsonify({'report':report.to_string()})
+    return jsonify({
+        'results' : results,
+    })
 
 
 @app.route('/predict', methods=['POST'])
@@ -71,15 +118,11 @@ def predict():
     body = request.get_json()
     classes_to_predict = body.get('to_predict')
     window_days = body.get('window', 2)
-    retrain = body.get('retrain', False)
-    search = body.get('search', False)
-    
-    if retrain:
-        train_model(search)
+    num_to_predict = body.get('num_to_predict', 20)
     
     jobs, report = predict_unlabeled_jobs(
         window_days = window_days,
-        n_jobs      = 20,
+        n_jobs      = num_to_predict,
         to_predict  = classes_to_predict,
     )
 
@@ -258,6 +301,7 @@ def update_job():
     
     finally:
         return jsonify({'msg':msg})
+
 
 # This will be used to return the react app
 @app.route('/', defaults={'path': ''}, methods=['GET'])

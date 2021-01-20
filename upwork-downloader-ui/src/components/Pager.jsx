@@ -1,27 +1,67 @@
 import React from "react";
 
 const Pager = ({ totalJobs, jobsPerPage, currentPage, setPage }) => {
-  const createNum = (num) => {
+  
+  const createNum = (num, isDot, hiddable,) => {
+    let highlight = "";
+    if (currentPage === num) {
+      highlight = "bg-indigo-200 hover:bg-indigo-200 font-bold "
+    } else {
+      highlight = "hover:bg-gray-50 ";
+    }
+    
+    let extra = "";
+    if (hiddable) {
+      extra = "sm:hidden ";
+    }
+    
+    let numShown = num;
+    if (isDot) {
+      numShown = "...";
+    }
+
     return (
       <button
-      key={num}
+        key={num}
         className={
           "relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 " +
-          (currentPage === num
-            ? "bg-indigo-200 hover:bg-indigo-200 font-bold"
-            : "hover:bg-gray-50")
+          highlight + extra
         }
-        onClick={() => setPage(num)}
+        onClick={() => num === numShown ? setPage(num) : ""}
       >
-        {num}
+        {numShown}
       </button>
     );
   };
 
   let maxPages = Math.ceil(totalJobs/jobsPerPage);
   let nums = [];
+  let isDot = false;
+  let hiddable = false;
+  
   for (let i = 1; i <= maxPages; i++) {
-    nums.push(createNum(i));
+
+    let x = 3;
+    let n;
+    if ((i > x) && (i < (currentPage - x))) {
+      hiddable = isDot ? true : false;
+      isDot = true;
+    } else if ((i > x) && (i < currentPage)) {
+      hiddable = false;
+      isDot = false;
+    } else if ((i > currentPage) && (i <= (currentPage + x))) {
+      isDot = false;
+      hiddable = false;
+    } else if ( (i > currentPage) && (i <= (maxPages - x))) {
+      hiddable = isDot ? true : false;
+      isDot = true;
+    } else if (i >= (maxPages - x)) {
+      isDot = false;
+      hiddable = false;
+    } 
+
+    n = createNum(i, isDot, hiddable);
+    nums.push(n);
   }
 
   return (
@@ -61,7 +101,7 @@ const Pager = ({ totalJobs, jobsPerPage, currentPage, setPage }) => {
               onClick={() => setPage(currentPage - 1)}
               className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
             >
-              <span className="sr-only">Previous</span>
+              <span className="">Previous</span>
               <svg
                 className="h-5 w-5"
                 xmlns="http://www.w3.org/2000/svg"
@@ -77,11 +117,26 @@ const Pager = ({ totalJobs, jobsPerPage, currentPage, setPage }) => {
               </svg>
             </button>
             {nums}
+      
+      
+            <button
+                className={
+                  "relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 " +
+                  (maxPages < 20
+                    ? "hidden "
+                    : " ") 
+                }
+                
+              >
+                {"..."}
+              </button>
+
+
             <button
               onClick={() => setPage(currentPage + 1)}
               className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
             >
-              <span className="sr-only">Next</span>
+              <span className="">Next</span>
               <svg
                 className="h-5 w-5"
                 xmlns="http://www.w3.org/2000/svg"

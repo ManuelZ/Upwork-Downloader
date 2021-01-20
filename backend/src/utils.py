@@ -35,8 +35,8 @@ def identity(x):
     return x
 
 
-def load_database_data(classFilter=['Good', 'Bad', 'Maybe']):
-    """ Load data from the sqlite database based on """
+def load_database_data(classFilter=['Good', 'Maybe', 'Bad', 'Irrelevant']):
+    """ Load data from the sqlite database based on its label"""
 
     try:
         cur = sql.connect(DATABASE).cursor()

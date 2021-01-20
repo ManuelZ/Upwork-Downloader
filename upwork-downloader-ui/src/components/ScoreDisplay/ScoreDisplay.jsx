@@ -3,7 +3,7 @@ import Plotly from "plotly.js-cartesian-dist";
 import createPlotlyComponent from "react-plotly.js/factory";
 const Plot = createPlotlyComponent(Plotly);
 
-const ScoreDisplay = ({ Good, Maybe, Bad }) => {
+const ScoreDisplay = ({ Good, Maybe, Bad, Irrelevant }) => {
   return (
     <div className="w-1/3 lg:w-1/6 px-4">
       <Plot
@@ -12,8 +12,8 @@ const ScoreDisplay = ({ Good, Maybe, Bad }) => {
         data={[
           {
             type: "bar",
-            y: ["Bad", "Maybe", "Good"],
-            x: [Bad, Maybe, Good],
+            y: ["Irrelevant", "Bad", "Maybe", "Good"],
+            x: [Irrelevant, Bad, Maybe, Good],
             orientation: "h",
             hoverinfo: "skip",
           },
@@ -21,7 +21,7 @@ const ScoreDisplay = ({ Good, Maybe, Bad }) => {
         layout={{
           font: { size: 10 },
           autosize: true,
-          margin: { l: 40, r: 0, t: 12, b: 12 },
+          margin: { l: 45, r: 0, t: 12, b: 12 },
           showlegend: false,
           paper_bgcolor: "#f9fafb",
           plot_bgcolor: "#f9fafb",

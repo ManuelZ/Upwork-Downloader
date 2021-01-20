@@ -6,6 +6,7 @@ import JobsCount from "../components/JobsCount";
 import { sortByDate, get_endpoint } from "../utils/utils";
 import Button from "../components/Button";
 import Pager from "../components/Pager";
+import SearchBar from "../components/SearchBar";
 
 const ENDPOINT = get_endpoint();
 
@@ -20,6 +21,7 @@ const ManualClassifier = () => {
     maybe: false,
     bad: false,
     uncategorized: false,
+    irrelevant: false,
   });
 
   const buttonRef = useRef(null);
@@ -56,7 +58,38 @@ const ManualClassifier = () => {
       label: "Uncategorized",
       active: classFilter.uncategorized,
     },
+    {
+      id: "irrelevant",
+      label: "Irrelevant",
+      active: classFilter.irrelevant,
+    },
   ];
+
+  /****************************************************************************
+   * Handle search requests from the client
+   *
+   ****************************************************************************/
+  async function searchCall(text) {
+    let activeClasses = filterClasses
+      .filter((x) => x["active"])
+      .map((x) => x["label"])
+      .join(",");
+    let response = await fetch(
+      `${ENDPOINT}/search?text=${text}&classes=${activeClasses}`
+    );
+
+    const results = await response.json();
+    console.log(`Found ${results["data"].length} jobs`);
+
+    let jobsById = {};
+    for (const job of results["data"]) {
+      jobsById[job.id] = job;
+    }
+
+    setJobs(jobsById);
+    setTotalJobs(results["data"].length);
+
+  }
 
   const toggleFilter = (filterId) => {
     setClassFilter((prevFilter) => {
@@ -131,7 +164,9 @@ const ManualClassifier = () => {
       .then((response) => response.json())
       .then((content) => {
         setFetching(false);
-        buttonRef.current.removeAttribute("disabled");
+        if (buttonRef) {
+          buttonRef.current.removeAttribute("disabled");
+        }
       });
   };
 
@@ -241,6 +276,7 @@ const ManualClassifier = () => {
         <div className="flex lg:w-1/6"></div>
       </div>
 
+      <SearchBar searchCall={searchCall} />
       <div className="flex flex-col m-2 lg:m-5 p-0 lg:p-4">{content}</div>
 
       <Pager

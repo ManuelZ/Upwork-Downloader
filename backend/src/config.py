@@ -99,3 +99,5 @@ SILHOUETTE_TOL = 0.01
 
 # Kmeans dataset pases
 MAX_FAILED_PASSES = 2
+
+LABELS = ['Good', 'Maybe', 'Bad', 'Irrelevant']

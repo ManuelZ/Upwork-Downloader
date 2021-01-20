@@ -5,6 +5,7 @@ import Truncate from "react-truncate";
 import ScoreDisplay from "./ScoreDisplay/ScoreDisplay";
 
 const Job = ({ id, details, handler }) => {
+
   const [truncated, setTruncated] = useState(true);
   const [firstRender, setFirstRender] = useState(true);
 
@@ -22,7 +23,7 @@ const Job = ({ id, details, handler }) => {
     [truncated, setTruncated]
   );
 
-  const { Good, Maybe, Bad } = details;
+  const { Good, Maybe, Bad, Irrelevant } = details;
 
   return (
     <div className="flex flex-col w-full rounded shadow-lg text-left py-2 px-1 lg:px-4 mb-6 lg:min-h-50 items-end bg-gray-50">
@@ -59,7 +60,7 @@ const Job = ({ id, details, handler }) => {
           </div>
         </div>
 
-        {!Good ? "" : <ScoreDisplay Good={Good} Maybe={Maybe} Bad={Bad} />}
+        {!Good ? "" : <ScoreDisplay Good={Good} Maybe={Maybe} Bad={Bad} Irrelevant={Irrelevant}/>}
       </div>
       <div className="flex flex-col lg:flex-row flex-grow w-full px-4 pb-4 justify-end">
         <div className="lg:w-4/6 pt-8 pb-2 lg:py-4 break-words whitespace-pre-line text-justify">
