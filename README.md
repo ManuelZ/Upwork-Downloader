@@ -2,6 +2,10 @@
 
 ![User Interface 1](images/image1.png)
 
+![User Interface 2](images/image2.png)
+
+![User Interface 3](images/image3.png)
+
 ## Summary
 
 I started this project because I felt that I could personalize the way of finding good and fulfilling jobs in Upwork to my own needs and liking. 
@@ -61,6 +65,7 @@ Allow Upwork Users to search for and browse Upwork job postings with a customize
 - TailwindCSS
 - Docker
 
+<!-- 
 ## Setup instructions
 
 Download a Raspberry Pi image and burn it to a microSD card:
@@ -163,7 +168,18 @@ REMEMBER TO GET IT BACK TO 100MB AFTER COMPILING OR YOUR MICROSD WILL DIE EARLY
 ### Change directory into the project
     cd ~/Upwork-Downloader
 ### Run the compilation
-    bash build_and_run.sh
+    bash build_and_run.sh -->
+
+
+
+
+
+
+
+
+
+
+
 
 <!-- 
 ### Build the image
